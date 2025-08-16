@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Infinite Multiverse Evolver — Single File</title>
+<style>
+  /* ---------- Visual style: dark, high-contrast, mobile-first ---------- */
+  :root{
+    --bg:#0b0f16; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb; --accent:#7dd3fc;
+    --accent2:#a78bfa; --danger:#f87171; --ok:#34d399; --gold:#fbbf24;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  #wrap{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh}
+  header,footer{background:linear-gradient(180deg,#0f172a,transparent);padding:8px 10px}
+  header{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  header .brand{font-weight:700;letter-spacing:.3px}
+  header button, header .btn{border:1px solid #1f2937;background:#111827;color:#e5e7eb;border-radius:8px;padding:6px 10px;font-size:14px}
+  header button:hover{background:#0f172a}
+  header .pill{padding:6px 10px;border-radius:999px;border:1px solid #1f2937;background:#0b1220}
+  #sim{position:relative;overflow:hidden}
+  #c{position:absolute;inset:0;touch-action:none;background:radial-gradient(1200px 800px at 30% 30%, #0c1220 0%, #070b12 50%, #05070c 100%)}
+  #hud{position:absolute;left:8px;top:8px;display:flex;gap:8px;flex-wrap:wrap}
+  #hud .chip{background:#0b1220;border:1px solid #1e293b;border-radius:8px;padding:6px 8px;font-size:12px;color:var(--muted)}
+  #right{position:absolute;right:10px;top:10px;width:min(360px,46vw);max-height:88vh;overflow:auto;background:#0b1220aa;border:1px solid #1e293b;border-radius:12px;padding:10px;backdrop-filter:blur(6px)}
+  #right h3{margin:6px 0 4px 0;font-size:14px;color:#cbd5e1}
+  #right .row{display:flex;align-items:center;gap:8px;margin:6px 0}
+  #right input[type=range]{width:100%}
+  #right .small{font-size:12px;color:var(--muted)}
+  #right .divider{border-top:1px solid #1f2937;margin:8px 0}
+  #miniWrap{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  canvas.mini{width:100%;height:120px;background:#0b1220;border:1px solid #1e293b;border-radius:8px}
+  #log{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;white-space:pre-wrap;background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:8px;max-height:120px;overflow:auto}
+  #inspect{background:#0b1220;border:1px solid #1f2937;border-radius:8px;padding:8px}
+  footer{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  footer .group{display:flex;gap:6px;flex-wrap:wrap}
+  footer button{border:1px solid #1f2937;background:#0b1220;color:#e5e7eb;border-radius:8px;padding:8px 10px}
+  footer button.tiny{font-size:12px;padding:6px 8px}
+  footer .speed{display:flex;gap:4px}
+  .kbd{border:1px solid #1f2937;background:#111827;border-radius:6px;padding:1px 6px;font-size:12px;color:#cbd5e1}
+  a{color:var(--accent)}
+  /* High-DPI crispness */
+  @media (min-width:1000px){
+    #right{width:360px}
+    header .brand{font-size:16px}
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <span class="brand">∞ Multiverse Evolver</span>
+    <span class="pill">Tap/Click creatures to inspect • Pinch to zoom • Drag to pan • <span class="kbd">Space</span> play/pause</span>
+    <button id="btnHelp">Help</button>
+    <button id="btnSave">Save</button>
+    <button id="btnLoad">Load</button>
+    <button id="btnWipe" title="Clear local save">Wipe</button>
+    <span class="pill" id="statTick">tick 0</span>
+    <span class="pill" id="statPop">pop 0</span>
+    <span class="pill" id="statUni">universes 0</span>
+  </header>
+
+  <div id="sim">
+    <canvas id="c"></canvas>
+    <div id="hud"></div>
+    <aside id="right">
+      <h3>Parameters (live)</h3>
+      <div class="row">
+        <label>Mutation rate</label><input id="pmut" type="range" min="0" max="1" step="0.005" value="0.08"><span id="pmutv" class="small">0.08</span>
+      </div>
+      <div class="row">
+        <label>Food rate</label><input id="pfood" type="range" min="0" max="3" step="0.01" value="1.10"><span id="pfoodv" class="small">1.10</span>
+      </div>
+      <div class="row">
+        <label>Predation</label><input id="ppred" type="range" min="0" max="1" step="0.01" value="0.45"><span id="ppredv" class="small">0.45</span>
+      </div>
+      <div class="row">
+        <label>Migration flux</label><input id="pmig" type="range" min="0" max="1" step="0.01" value="0.25"><span id="pmigv" class="small">0.25</span>
+      </div>
+      <div class="row">
+        <label>Cap/pop per universe</label><input id="pcap" type="range" min="40" max="400" step="10" value="220"><span id="pcapv" class="small">220</span>
+      </div>
+      <div class="row">
+        <label>Quality</label><input id="pqual" type="range" min="0.5" max="1.25" step="0.05" value="1.0"><span id="pqualv" class="small">1.00</span>
+      </div>
+
+      <div class="divider"></div>
+      <h3>Multiverse Map</h3>
+      <div id="miniWrap">
+        <canvas id="miniNet" class="mini" title="Tap a node to switch universes"></canvas>
+        <canvas id="miniUni" class="mini" title="Local portals & density"></canvas>
+      </div>
+
+      <div class="divider"></div>
+      <h3>Inspect</h3>
+      <div id="inspect" class="small">Tap a creature to see genome, species, lineage & stats.</div>
+
+      <div class="divider"></div>
+      <h3>Chronicle</h3>
+      <div id="log" class="small"></div>
+    </aside>
+  </div>
+
+  <footer>
+    <div class="group">
+      <button id="btnPlay">▶︎ Play</button>
+      <button id="btnPause">II Pause</button>
+      <button id="btnStep" class="tiny">Step</button>
+      <div class="speed">
+        <button data-speed="0.25" class="tiny">0.25×</button>
+        <button data-speed="1" class="tiny">1×</button>
+        <button data-speed="2" class="tiny">2×</button>
+        <button data-speed="4" class="tiny">4×</button>
+        <button data-speed="8" class="tiny">8×</button>
+        <button data-speed="16" class="tiny">16×</button>
+        <button data-speed="32" class="tiny">32×</button>
+      </div>
+      <button id="btnNew" title="Grow a new connected universe">+ New Universe</button>
+      <button id="btnCenter" class="tiny" title="Center view">Center</button>
+    </div>
+    <div class="group small">
+      Deterministic fixed-step sim (<span class="kbd">↑↓←→</span> pan, <span class="kbd">+</span>/<span class="kbd">-</span> zoom, <span class="kbd">D</span> step, <span class="kbd">H</span> help)
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   INFINITE MULTIVERSE EVOLVER — Single-file, zero dependencies
+   ------------------------------------------------------------
+   Design goals:
+   - Multiple universes (nodes) connected by black holes (edges).
+   - Creatures evolve via a simple eco-evo model (eat → reproduce
+     with mutation → speciate). Diets & morphologies differ.
+   - Species visuals are NOT simple circles: silhouettes come from
+     parametric generators (superformula, spirals, cuffs, orbitals),
+     composite limbs/tendrils, internal patterning, and cached sprites.
+   - Time controls: play/pause/step; fixed dt; deterministic RNG seeds.
+   - Runs on iPhone 13 Safari + desktop; touch + mouse + keyboard.
+   - Live parameters; save/load to localStorage.
+   - Minimal but effective spatial hashing for performance.
+
+   Implementation notes are sprinkled through the code.
+   ============================================================ */
+
+(function(){
+'use strict';
+
+/* ---------- Utilities & PRNG (mulberry32) ---------- */
+const TAU = Math.PI*2;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+
+function mulberry32(seed){
+  return function(){
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+function createRngFromString(str){
+  // Simple 32-bit hash of string
+  let h = 2166136261>>>0;
+  for (let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i); h = Math.imul(h, 16777619);
+  }
+  return mulberry32(h>>>0);
+}
+function rndRange(rng,a,b){ return a + (b-a)*rng(); }
+function pick(rng,arr){ return arr[(arr.length*rng())|0]; }
+function randInt(rng,a,b){ return (rndRange(rng,a,b+1))|0; }
+
+/* ---------- Names for species: vibe + suffix ---------- */
+const NAME_A = ["Auro","Cryo","Nocto","Sapro","Zygo","Luma","Chloro","Myco","Aether","Veloci","Tetra","Hexa","Quasi","Nebulo","Xeno","Paleo","Fracto","Spira","Plasma","Ortho","Iso","Aniso","Glacio","Pyro","Hydro"];
+const NAME_B = ["phyllum","drome","phyte","morph","zoon","myra","cyst","pod","ther","carid","lith","bion","sema","tode","brach","forma","taxis","ceps","vore","meleon","plex","soma","gaster","arach","gryph"];
+function speciesName(rng){ return pick(rng,NAME_A)+pick(rng,NAME_B); }
+
+/* ---------- Canvas setup & device scaling ---------- */
+const DPR = Math.max(1, Math.min(2.5, window.devicePixelRatio||1)); // cap for perf
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d', {alpha:true, desynchronized:true});
+const hud = document.getElementById('hud');
+function resize(){
+  canvas.width = Math.floor(canvas.clientWidth * DPR);
+  canvas.height = Math.floor(canvas.clientHeight * DPR);
+}
+const ro = new ResizeObserver(resize); ro.observe(canvas);
+
+/* ---------- World <-> Screen transform (pan/zoom) ---------- */
+let view = { x:0, y:0, z:1 }; // world center and zoom
+function worldToScreen(x,y){ return [ (x - view.x)*view.z*DPR + canvas.width*0.5, (y - view.y)*view.z*DPR + canvas.height*0.5 ]; }
+function screenToWorld(x,y){ return [ (x - canvas.width*0.5)/(view.z*DPR) + view.x, (y - canvas.height*0.5)/(view.z*DPR) + view.y ]; }
+
+/* ---------- Input: mouse/touch/keys ---------- */
+let dragging=false, lastX=0,lastY=0;
+let pinch=false, pinchDist=0, pinchStartZ=1;
+canvas.addEventListener('mousedown',e=>{ dragging=true; [lastX,lastY]=[e.clientX,e.clientY]; });
+window.addEventListener('mouseup',()=>dragging=false);
+window.addEventListener('mousemove',e=>{
+  if(!dragging) return;
+  const dx=(e.clientX-lastX), dy=(e.clientY-lastY);
+  view.x -= dx/(view.z*DPR); view.y -= dy/(view.z*DPR);
+  [lastX,lastY]=[e.clientX,e.clientY];
+});
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const delta = Math.sign(e.deltaY);
+  const factor = (delta>0)? 1/1.1 : 1.1;
+  // Zoom around cursor
+  const [wx,wy] = screenToWorld(e.clientX*DPR, e.clientY*DPR);
+  view.z = clamp(view.z*factor, 0.25, 5);
+  const [sx,sy] = worldToScreen(wx,wy);
+  const [wx2,wy2] = screenToWorld(e.clientX*DPR, e.clientY*DPR);
+  view.x += (wx - wx2); view.y += (wy - wy2);
+},{passive:false});
+
+let lastTap=0;
+canvas.addEventListener('touchstart',e=>{
+  if(e.touches.length===1){
+    const t=e.touches[0]; dragging=true; [lastX,lastY]=[t.clientX,t.clientY];
+    const now=performance.now();
+    if(now-lastTap<300){ togglePlay(); } // double-tap play/pause
+    lastTap=now;
+  }else if(e.touches.length===2){
+    pinch=true; dragging=false;
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    pinchDist=Math.hypot(dx,dy); pinchStartZ=view.z;
+  }
+},{passive:true});
+canvas.addEventListener('touchmove',e=>{
+  if(pinch && e.touches.length===2){
+    const dx=e.touches[0].clientX-e.touches[1].clientX;
+    const dy=e.touches[0].clientY-e.touches[1].clientY;
+    const d=Math.hypot(dx,dy);
+    const f = d/pinchDist;
+    view.z = clamp(pinchStartZ*f, 0.25, 5);
+  }else if(dragging && e.touches.length===1){
+    const t=e.touches[0]; const dx=t.clientX-lastX, dy=t.clientY-lastY;
+    view.x -= dx/(view.z*DPR); view.y -= dy/(view.z*DPR);
+    [lastX,lastY]=[t.clientX,t.clientY];
+  }
+},{passive:true});
+window.addEventListener('touchend',()=>{ pinch=false; dragging=false; });
+
+window.addEventListener('keydown',e=>{
+  if(e.key===' '){ e.preventDefault(); togglePlay(); }
+  if(e.key==='d' || e.key==='D'){ stepOnce(); }
+  if(e.key==='+'){ view.z=clamp(view.z*1.1,0.25,5); }
+  if(e.key==='-'){ view.z=clamp(view.z/1.1,0.25,5); }
+  if(e.key==='ArrowUp'){ view.y -= 40/(view.z); }
+  if(e.key==='ArrowDown'){ view.y += 40/(view.z); }
+  if(e.key==='ArrowLeft'){ view.x -= 40/(view.z); }
+  if(e.key==='ArrowRight'){ view.x += 40/(view.z); }
+  if(e.key==='h' || e.key==='H'){ showHelp(); }
+});
+
+/* ---------- Parameter panel wiring ---------- */
+const qs = s=>document.querySelector(s);
+const $pmut=qs('#pmut'),$pfood=qs('#pfood'),$ppred=qs('#ppred'),$pmig=qs('#pmig'),$pcap=qs('#pcap'),$pqual=qs('#pqual');
+const $pmutv=qs('#pmutv'),$pfoodv=qs('#pfoodv'),$ppredv=qs('#ppredv'),$pmigv=qs('#pmigv'),$pcapv=qs('#pcapv'),$pqualv=qs('#pqualv');
+[$pmut,$pfood,$ppred,$pmig,$pcap,$pqual].forEach(inp=>{
+  inp.addEventListener('input',()=>{
+    $pmutv.textContent=Number($pmut.value).toFixed(2);
+    $pfoodv.textContent=Number($pfood.value).toFixed(2);
+    $ppredv.textContent=Number($ppred.value).toFixed(2);
+    $pmigv.textContent=Number($pmig.value).toFixed(2);
+    $pcapv.textContent=$pcap.value;
+    $pqualv.textContent=Number($pqual.value).toFixed(2);
+    // live apply
+    params.mutation = +$pmut.value;
+    params.foodRate = +$pfood.value;
+    params.predation = +$ppred.value;
+    params.migration = +$pmig.value;
+    params.cap = +$pcap.value|0;
+    params.quality = +$pqual.value;
+  });
+});
+
+/* ---------- Stats UI ---------- */
+const $tick=qs('#statTick'), $pop=qs('#statPop'), $uni=qs('#statUni');
+const $log=qs('#log'), $inspect=qs('#inspect');
+function logLine(s){
+  $log.textContent = (s+"\n"+$log.textContent).slice(0,4000);
+}
+
+/* ---------- Mini maps ---------- */
+const miniNet=qs('#miniNet'), miniUni=qs('#miniUni');
+const mNet=miniNet.getContext('2d'), mUni=miniUni.getContext('2d');
+function resizeMini(){
+  miniNet.width=miniNet.clientWidth*DPR; miniNet.height=miniNet.clientHeight*DPR;
+  miniUni.width=miniUni.clientWidth*DPR; miniUni.height=miniUni.clientHeight*DPR;
+}
+new ResizeObserver(resizeMini).observe(miniNet);
+new ResizeObserver(resizeMini).observe(miniUni);
+
+/* ---------- Simulation core ---------- */
+const params = {
+  mutation: +$pmut.value,
+  foodRate: +$pfood.value,
+  predation: +$ppred.value,
+  migration: +$pmig.value,
+  cap: +$pcap.value|0,
+  quality: +$pqual.value
+};
+
+const FIXED_DT = 0.08; // seconds per tick — deterministic physics step
+let simSpeed=1; // multiplier
+let running=true;
+function togglePlay(){ running=!running; updateButtons(); }
+function updateButtons(){
+  qs('#btnPlay').disabled = running;
+  qs('#btnPause').disabled = !running;
+}
+qs('#btnPlay').onclick=()=>{ running=true; updateButtons(); };
+qs('#btnPause').onclick=()=>{ running=false; updateButtons(); };
+qs('#btnStep').onclick=()=>stepOnce();
+qs('#btnCenter').onclick=()=>centerView();
+qs('#btnNew').onclick=()=>{ multiverse.addUniverseNearCurrent(); drawMini(); logLine("✦ New universe budded from current"); };
+
+document.querySelectorAll('footer .speed button[data-speed]')
+  .forEach(b=> b.addEventListener('click',()=>{ simSpeed = +b.dataset.speed; }));
+
+qs('#btnHelp').onclick=()=>showHelp();
+qs('#btnSave').onclick=()=>saveState();
+qs('#btnLoad').onclick=()=>loadState();
+qs('#btnWipe').onclick=()=>{ localStorage.removeItem('multiverseSave'); logLine("Local save cleared."); };
+
+/* ---------- Help overlay ---------- */
+function showHelp(){
+  alert([
+    "INFINITE MULTIVERSE EVOLVER",
+    "• Drag to pan, pinch/scroll to zoom, double-tap space to play/pause.",
+    "• Tap creatures to inspect genome/species/lineage.",
+    "• Portals (swirling nodes) link to other universes; creatures migrate.",
+    "• Species evolve: eat → reproduce → mutate → speciate. Distinct silhouettes.",
+    "• Deterministic ticks; speed presets; live params; save/load state.",
+    "Keyboard: Space toggle, D single step, Arrows pan, +/- zoom, H help."
+  ].join("\n"));
+}
+
+/* ---------- Data definitions ---------- */
+let globalSeed = Date.now()>>>0;
+let globalRng = mulberry32(globalSeed);
+
+/* Creature genome fields:
+   - morph: 0..4 (distinct renderers)
+   - hue: 0..360
+   - sat: 0..1
+   - lum: 0.4..0.75
+   - size: body scale (6..20)
+   - speed: movement coefficient (10..60)
+   - sense: sensing radius (40..160)
+   - diet: 0 plant/particle, 1 predator, 2 omnivore
+   - specVar: morphology params bag (array of floats)
+*/
+function randomGenome(rng){
+  const morph = randInt(rng,0,4);
+  const hue = randInt(rng,0,360);
+  const sat = rndRange(rng,0.5,1);
+  const lum = rndRange(rng,0.45,0.75);
+  const size = rndRange(rng,8,18);
+  const speed = rndRange(rng,16,48);
+  const sense = rndRange(rng,60,140);
+  const dietR = rng();
+  const diet = dietR<0.55?0: (dietR<0.8?2:1);
+  const specVar = new Array(6).fill(0).map(()=>rndRange(rng,0,1));
+  return {morph,hue,sat,lum,size,speed,sense,diet,specVar};
+}
+function mutateGenome(parent, rng, rate){
+  function jitter(v, amt){ return v + (rng()*2-1)*amt*rate; }
+  const g = JSON.parse(JSON.stringify(parent));
+  if(rng()<rate*0.6) g.morph = (g.morph + (rng()<0.5?-1:1) + 5) % 5;
+  g.hue = (g.hue + randInt(rng,-20,20)+360)%360;
+  g.sat = clamp(jitter(g.sat,0.25),0.2,1);
+  g.lum = clamp(jitter(g.lum,0.2),0.25,0.85);
+  g.size = clamp(jitter(g.size,6),6,28);
+  g.speed = clamp(jitter(g.speed,18),8,70);
+  g.sense = clamp(jitter(g.sense,50),30,220);
+  if(rng()<rate*0.5) g.diet = randInt(rng,0,2);
+  for(let i=0;i<g.specVar.length;i++) g.specVar[i]=clamp(jitter(g.specVar[i],0.7),0,1);
+  return g;
+}
+
+/* Species structure */
+let nextSpeciesId=1;
+function makeSpecies(rng, parentSpeciesId=null, parentGenome=null){
+  const genome = parentGenome? mutateGenome(parentGenome, rng, params.mutation*0.8): randomGenome(rng);
+  const id = nextSpeciesId++;
+  const name = speciesName(rng);
+  const color = `hsl(${genome.hue}deg ${Math.round(65+genome.sat*35)}% ${Math.round(30+genome.lum*40)}%)`;
+  return {
+    id, name, genome, parent: parentSpeciesId, birthTick: simTick, totalBorn:0, totalDeaths:0,
+    bestAge:0, expansions:0, color, cachedSprite:null, spriteScale:1
+  };
+}
+
+/* Creature structure */
+function makeCreature(universe, species, x, y){
+  const g = species.genome;
+  const ang = universe.rng()*TAU;
+  return {
+    x, y, vx:Math.cos(ang)*0.1, vy:Math.sin(ang)*0.1,
+    ang, energy: 60 + universe.rng()*40, // 0..100-ish
+    age:0, speciesId: species.id, target:null, cooldown:0, blink:0,
+    id: (universe.id+"-"+Math.random()).slice(0,18)
+  };
+}
+
+/* Food particles */
+function makeFood(universe){
+  return { x: rndRange(universe.rng,0,universe.size), y: rndRange(universe.rng,0,universe.size), v: rndRange(universe.rng,4,10) };
+}
+
+/* Universe class */
+class Universe{
+  constructor(id, seed, size=1200){
+    this.id=id; this.size=size; this.seed=seed; this.rng=mulberry32(seed);
+    this.creatures=[]; this.food=[]; this.species=new Map(); this.holes=[];
+    this.gridSize=60; this.grid = new Map(); // spatial hash
+    this.chronicle=[];
+    this.spawnInitial();
+    this.createBlackHoles();
+  }
+  spawnInitial(){
+    // Seed with 3 root species
+    for(let s=0;s<3;s++){
+      const sp = makeSpecies(this.rng);
+      this.species.set(sp.id, sp);
+      for(let i=0;i<24;i++){
+        const x=rndRange(this.rng,200,this.size-200), y=rndRange(this.rng,200,this.size-200);
+        const c=makeCreature(this, sp, x, y); this.creatures.push(c); sp.totalBorn++;
+      }
+    }
+    // Food
+    for(let i=0;i<220;i++) this.food.push(makeFood(this));
+    this.log(`Universe ${this.id} awakens with ${this.creatures.length} lifeforms.`);
+  }
+  createBlackHoles(){
+    // 2–3 portals per universe placed around edges; linked later by multiverse
+    const n = randInt(this.rng,2,3);
+    this.holes = [];
+    for(let i=0;i<n;i++){
+      const m = (i+1)/(n+1);
+      const pos = [
+        rndRange(this.rng, 120, this.size-120),
+        this.rng()<0.5 ? rndRange(this.rng,40,100) : rndRange(this.rng,this.size-100,this.size-40)
+      ];
+      if(this.rng()<0.5) pos.reverse();
+      const angle = this.rng()*TAU;
+      this.holes.push({ x:pos[0], y:pos[1], r:40, angle, link:null }); // link filled by Multiverse
+    }
+  }
+  log(s){ this.chronicle.unshift({t:simTick, s}); if(this.chronicle.length>80) this.chronicle.pop(); if(this===multiverse.currentUniverse()) logLine("U"+this.id+": "+s); }
+
+  addCreatureFromSpecies(sp, x, y){
+    const c = makeCreature(this, sp, x, y); this.creatures.push(c); sp.totalBorn++;
+  }
+
+  // Spatial hashing
+  clearGrid(){ this.grid.clear(); }
+  cellKey(x,y){ return ((x/this.gridSize)|0)+"," + ((y/this.gridSize)|0); }
+  addToGrid(c){
+    const k=this.cellKey(c.x,c.y);
+    let a=this.grid.get(k); if(!a){ a=[]; this.grid.set(k,a); }
+    a.push(c);
+  }
+  neighbors(x,y,rad){
+    const r = (rad/this.gridSize|0)+1, cx=(x/this.gridSize|0), cy=(y/this.gridSize|0);
+    const out=[];
+    for(let dy=-r; dy<=r; dy++)
+      for(let dx=-r; dx<=r; dx++){
+        const a=this.grid.get((cx+dx)+","+(cy+dy));
+        if(a) out.push(...a);
+      }
+    return out;
+  }
+
+  step(dt){
+    // Food spawn (scaled by rate and population deficit)
+    const want = Math.max(60, params.cap*0.8);
+    const deficit = Math.max(0, want - (this.food.length*2));
+    let toAdd = (params.foodRate*deficit*0.02)|0;
+    for(let i=0;i<toAdd;i++) this.food.push(makeFood(this));
+
+    // Spatial grid
+    this.clearGrid();
+    for(const c of this.creatures) this.addToGrid(c);
+
+    // Update creatures
+    const removal = [];
+    const predationChance = params.predation;
+    for(const c of this.creatures){
+      const sp = this.species.get(c.speciesId); const g = sp.genome;
+      c.age += dt; c.energy -= 0.03 + g.speed*0.0002 + g.size*0.0004;
+      if(c.cooldown>0) c.cooldown-=dt;
+      if(c.blink>0) c.blink-=dt;
+
+      // Sense: nearest target (food or prey) within g.sense
+      let tx=null, ty=null, tDist=1e9, target=null, targetType=null;
+      const neigh = this.neighbors(c.x,c.y, g.sense);
+      if(g.diet===0 || g.diet===2){
+        // Food
+        for(const f of this.food){
+          const dx=f.x-c.x, dy=f.y-c.y, d2=dx*dx+dy*dy; if(d2<tDist && d2<g.sense*g.sense){ tDist=d2; tx=f.x; ty=f.y; target=f; targetType='food'; }
+        }
+      }
+      if(g.diet===1 || g.diet===2){
+        // Prey: pick smaller/slower
+        for(const o of neigh){
+          if(o===c) continue;
+          const osp = this.species.get(o.speciesId);
+          if(osp.genome.size < g.size*0.95){
+            const dx=o.x-c.x, dy=o.y-c.y, d2=dx*dx+dy*dy;
+            if(d2<tDist && d2<g.sense*g.sense){ tDist=d2; tx=o.x; ty=o.y; target=o; targetType='prey'; }
+          }
+        }
+      }
+
+      // Steering
+      let ax=0, ay=0;
+      // Slight wander
+      const r1 = (this.rng?this.rng():Math.random)();
+      const rvx = Math.cos(c.ang)*0.5, rvy=Math.sin(c.ang)*0.5;
+      ax += rvx; ay += rvy; c.ang += (r1-0.5)*0.2;
+
+      // Attraction to target
+      if(tx!=null){
+        const dx=tx-c.x, dy=ty-c.y, d=Math.hypot(dx,dy)+1e-6; ax += dx/d*1.2; ay += dy/d*1.2;
+      }
+
+      // Avoid boundaries
+      const m=100;
+      if(c.x<m) ax+=0.6; if(c.y<m) ay+=0.6;
+      if(c.x>this.size-m) ax-=0.6; if(c.y>this.size-m) ay-=0.6;
+
+      // Update velocity & position
+      c.vx = clamp(c.vx+ax*dt, -2, 2); c.vy = clamp(c.vy+ay*dt, -2, 2);
+      // Speed scaled by genome
+      const spd = g.speed*0.02;
+      const vlen=Math.hypot(c.vx,c.vy); if(vlen>0){ c.vx=c.vx/vlen*spd; c.vy=c.vy/vlen*spd; }
+      c.x += c.vx; c.y += c.vy;
+
+      // Interactions: eat
+      if(targetType==='food'){
+        if(Math.hypot(target.x-c.x, target.y-c.y) < g.size*0.8){
+          c.energy += target.v; // energy bonus
+          this.food.splice(this.food.indexOf(target),1);
+          c.blink=0.2;
+        }
+      }else if(targetType==='prey' && Math.random()<predationChance){
+        if(Math.hypot(target.x-c.x, target.y-c.y) < (g.size*0.6)){
+          // consume prey
+          const idx = this.creatures.indexOf(target);
+          if(idx>=0){
+            this.creatures.splice(idx,1);
+            const tsp = this.species.get(target.speciesId); tsp.totalDeaths++;
+            c.energy += 40; c.blink=0.25;
+          }
+        }
+      }
+
+      // Reproduce (split) if energy surplus and cooldown ready
+      if(c.energy>120 && c.cooldown<=0 && this.creatures.length<params.cap){
+        c.energy*=0.5; c.cooldown=2.2;
+        // Speciation: sometimes mutation produces new species fork
+        let childSpecies = sp;
+        if(Math.random()<params.mutation*0.25){
+          const newSp = makeSpecies(this.rng, sp.id, sp.genome);
+          this.species.set(newSp.id, newSp);
+          this.log(`Speciation: ${sp.name} → ${newSp.name}`);
+          childSpecies = newSp;
+        }
+        const cc = makeCreature(this, childSpecies, c.x + (Math.random()*8-4), c.y+(Math.random()*8-4));
+        // Mutate within species too
+        if(Math.random()<params.mutation*0.6){
+          childSpecies.genome = mutateGenome(childSpecies.genome, this.rng, params.mutation*0.5);
+          childSpecies.cachedSprite=null; // refresh sprite
+        }
+        this.creatures.push(cc); childSpecies.totalBorn++;
+      }
+
+      // Die if energy depleted or too old
+      if(c.energy<=0 || c.age>1800){
+        removal.push(c);
+      }
+
+      // Migration near portal
+      if(Math.random()<params.migration*0.02){
+        for(const h of this.holes){
+          const d=Math.hypot(c.x-h.x, c.y-h.y);
+          if(d<h.r*0.9 && h.link){
+            // teleport to linked universe hole
+            multiverse.migrate(c, this, h);
+            break;
+          }
+        }
+      }
+    }
+    // Apply removals
+    for(const c of removal){
+      const sp=this.species.get(c.speciesId); sp.totalDeaths++;
+      const idx=this.creatures.indexOf(c); if(idx>=0) this.creatures.splice(idx,1);
+    }
+
+    // Cap population softly by culling weakest (rarely)
+    if(this.creatures.length>params.cap*1.2){
+      this.creatures.sort((a,b)=> (a.energy+a.age*0.2) - (b.energy+b.age*0.2));
+      const kill = (this.creatures.length-params.cap)|0;
+      for(let i=0;i<kill;i++){
+        const c=this.creatures[i]; const sp=this.species.get(c.speciesId); sp.totalDeaths++;
+      }
+      this.creatures.splice(0, kill);
+      this.log(`Culled ${kill} to maintain ecological stability.`);
+    }
+
+    // Update species stats
+    for(const sp of this.species.values()){
+      sp.bestAge = Math.max(sp.bestAge, ...this.creatures.filter(c=>c.speciesId===sp.id).map(c=>c.age).concat(0));
+    }
+  }
+}
+
+/* ---------- Multiverse (graph of universes) ---------- */
+const multiverse = {
+  universes: new Map(), // id->Universe
+  edges: [], // {a, b, aHole, bHole}
+  currentId: 1,
+  rng: mulberry32((Date.now()*2654435761)>>>0),
+
+  currentUniverse(){ return this.universes.get(this.currentId); },
+
+  ensureUniverse(id){
+    if(this.universes.has(id)) return this.universes.get(id);
+    const u = new Universe(id, randInt(this.rng,1,2**31-1));
+    this.universes.set(id, u);
+    return u;
+  },
+
+  connect(a, b){
+    const ua=this.ensureUniverse(a), ub=this.ensureUniverse(b);
+    const ha = ua.holes.find(h=>!h.link) || ua.holes[0];
+    const hb = ub.holes.find(h=>!h.link) || ub.holes[0];
+    ha.link={universe:b, hole:hb}; hb.link={universe:a, hole:ha};
+    this.edges.push({a,b,aHole:ha,bHole:hb});
+    ua.log(`Wormhole opened to U${b}.`);
+    ub.log(`Wormhole opened to U${a}.`);
+  },
+
+  addUniverseNearCurrent(){
+    const newId = this.universes.size? Math.max(...this.universes.keys())+1 : 1;
+    const u = this.ensureUniverse(newId);
+    if(this.universes.size===1){ this.currentId=newId; return; }
+    this.connect(this.currentId, newId);
+    drawMini();
+  },
+
+  migrate(creature, fromU, holeA){
+    const link = holeA.link; if(!link) return;
+    const toU = this.universes.get(link.universe) || this.ensureUniverse(link.universe);
+    // Remove from 'fromU'
+    const idx=fromU.creatures.indexOf(creature); if(idx>=0) fromU.creatures.splice(idx,1);
+    const toHole = link.hole;
+    // Slight offset + rotate
+    creature.x = toHole.x + (Math.random()*6-3);
+    creature.y = toHole.y + (Math.random()*6-3);
+    creature.vx *= 0.5; creature.vy *= 0.5; creature.blink=0.3;
+    toU.creatures.push(creature);
+    // species expansion stat
+    const sp = toU.species.get(creature.speciesId);
+    if(sp) sp.expansions++;
+    toU.log(`Migration: one ${sp?sp.name:"organism"} arrived through the wormhole.`);
+  }
+};
+
+// Bootstrap initial universes network
+multiverse.ensureUniverse(1);
+multiverse.ensureUniverse(2);
+multiverse.connect(1,2);
+multiverse.currentId=1;
+
+/* ---------- Rendering: species sprites & complex silhouettes ---------- */
+
+// Create and cache a sprite for a species for performance.
+// We generate a unique silhouette using 5 morph renderers.
+function getSpeciesSprite(universe, species){
+  if(species.cachedSprite && species.spriteScale===params.quality) return species.cachedSprite;
+  const g = species.genome;
+  const scale = g.size * params.quality;
+  const sz = Math.max(32, Math.min(196, (scale*7)|0));
+  const oc = document.createElement('canvas'); oc.width=oc.height=sz;
+  const cx = oc.getContext('2d');
+  cx.translate(sz/2, sz/2);
+  cx.scale(scale/18, scale/18); // normalize body to canvas
+  // Body fill and stroke
+  const fill = `hsl(${g.hue}deg ${Math.round(60+g.sat*35)}% ${Math.round(45+g.lum*30)}%)`;
+  const stroke = `hsl(${(g.hue+30)%360}deg 50% 30%)`;
+  // Glow
+  cx.shadowColor=`hsl(${g.hue}deg 100% 50% / 0.25)`; cx.shadowBlur=6;
+
+  // Choose morph renderer
+  switch(g.morph){
+    case 0: drawRadiate(cx,g,fill,stroke); break;      // starfish/jelly hybrid
+    case 1: drawBilateral(cx,g,fill,stroke); break;    // bug-like with legs/antennae
+    case 2: drawOrbital(cx,g,fill,stroke); break;      // nucleus + orbiting pods
+    case 3: drawSpiralShell(cx,g,fill,stroke); break;  // logarithmic shell with ribs
+    case 4: drawLeafFrond(cx,g,fill,stroke); break;    // fern/leaf with veins
+  }
+  // Eyes / sensor cluster for personality
+  cx.save();
+  cx.rotate((g.specVar[4]-0.5)*0.8);
+  cx.fillStyle='white'; cx.beginPath(); cx.ellipse(4, -2, 2.5,1.6,0,0,TAU); cx.fill();
+  cx.fillStyle='black'; cx.beginPath(); cx.ellipse(4,-2,1,0.7,0,0,TAU); cx.fill();
+  cx.restore();
+
+  species.cachedSprite = oc;
+  species.spriteScale = params.quality;
+  return oc;
+}
+
+/* --- Morph renderers --- */
+
+// Utility: superformula-based closed curve outline
+function superformulaPath(cx, m, n1, n2, n3, steps, scale=12, jitter=0){
+  cx.beginPath();
+  for(let i=0;i<=steps;i++){
+    const phi = TAU*i/steps;
+    const a=1,b=1;
+    const t1 = Math.pow(Math.abs(Math.cos(m*phi/4)/a), n2);
+    const t2 = Math.pow(Math.abs(Math.sin(m*phi/4)/b), n3);
+    let r = Math.pow(t1+t2, -1/n1);
+    if(!isFinite(r)) r=0;
+    // subtle jitter for organic look
+    if(jitter) r *= 1 + (Math.sin(phi*5+ (steps%13))*jitter);
+    const x = r*Math.cos(phi)*scale, y = r*Math.sin(phi)*scale;
+    (i? cx.lineTo(x,y): cx.moveTo(x,y));
+  }
+  cx.closePath();
+}
+
+// 0) Radiate: bell with tendrils and radial arms
+function drawRadiate(cx,g,fill,stroke){
+  const m = 5 + (g.specVar[0]*5|0);
+  cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=1.8;
+  superformulaPath(cx, m, 0.6+g.specVar[1]*1.4, 5, 12, 240, 16, 0.04*g.specVar[2]);
+  cx.fill(); cx.stroke();
+
+  // translucent inner bell
+  cx.save();
+  cx.globalAlpha=0.25;
+  cx.fillStyle=`hsl(${(g.hue+310)%360}deg 80% 70%)`;
+  superformulaPath(cx, m+1, 0.8, 8, 4, 200, 10, 0);
+  cx.fill(); cx.restore();
+
+  // Tendrils
+  cx.strokeStyle=`hsl(${g.hue}deg 70% 60% / 0.6)`; cx.lineWidth=1.2;
+  const arms = 6 + (g.specVar[3]*6|0);
+  for(let i=0;i<arms;i++){
+    const a = TAU*i/arms + g.specVar[4]*0.7;
+    cx.beginPath(); cx.moveTo(Math.cos(a)*6, Math.sin(a)*6);
+    const len = 10+g.specVar[5]*16;
+    for(let k=1;k<=4;k++){
+      const t=k/4;
+      const x=Math.cos(a)*(6+t*len) + Math.sin(a*3+t*2)*1.5;
+      const y=Math.sin(a)*(6+t*len) + Math.cos(a*4+t*3)*1.5;
+      cx.lineTo(x,y);
+    }
+    cx.stroke();
+  }
+}
+
+// 1) Bilateral bug with legs & antennae
+function drawBilateral(cx,g,fill,stroke){
+  cx.save();
+  // Body
+  cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2;
+  cx.beginPath();
+  cx.moveTo(10,0);
+  cx.bezierCurveTo(6,-8, -4,-10, -10,0);
+  cx.bezierCurveTo(-4,10, 6,8, 10,0);
+  cx.closePath(); cx.fill(); cx.stroke();
+
+  // Segments & legs
+  const legs = 3 + (g.specVar[0]*5|0);
+  cx.strokeStyle=`hsl(${(g.hue+40)%360}deg 50% 55%)`; cx.lineWidth=1.2;
+  for(let i=0;i<legs;i++){
+    const y = -6 + i*(12/(legs-1));
+    cx.beginPath(); cx.moveTo(-4,y);
+    cx.quadraticCurveTo(-12,y-2, -14,y+(i%2?3:-3));
+    cx.moveTo(4,y);
+    cx.quadraticCurveTo(12,y+2, 14,y+(i%2?-3:3));
+    cx.stroke();
+  }
+  // Antennae
+  cx.beginPath();
+  cx.moveTo(6,-3); cx.quadraticCurveTo(12,-10, 14,-12); cx.moveTo(6,3); cx.quadraticCurveTo(12,10,14,12); cx.stroke();
+
+  // Stripe pattern
+  cx.globalAlpha=0.3; cx.fillStyle='white';
+  for(let i=0;i<5;i++){ cx.fillRect(-2+i*2-5,-8,1,16); }
+  cx.restore();
+}
+
+// 2) Orbital: nucleus + orbiting pods
+function drawOrbital(cx,g,fill,stroke){
+  cx.save();
+  const ring = 10+g.specVar[0]*8;
+  cx.strokeStyle=`hsl(${g.hue}deg 70% 60% / 0.8)`; cx.lineWidth=1.4;
+  cx.beginPath(); cx.ellipse(0,0, ring, ring*0.6, g.specVar[1]*0.9, 0, TAU); cx.stroke();
+
+  // Nucleus
+  cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=1.8;
+  cx.beginPath(); cx.arc(0,0,7+g.specVar[2]*4,0,TAU); cx.fill(); cx.stroke();
+
+  // Pods on orbit
+  const pods = 3 + (g.specVar[3]*5|0);
+  cx.fillStyle=`hsl(${(g.hue+260)%360}deg 70% 70%)`;
+  for(let i=0;i<pods;i++){
+    const a = TAU*i/pods + g.specVar[4]*1.2;
+    cx.beginPath(); cx.arc(Math.cos(a)*ring, Math.sin(a)*ring*0.6, 2+g.specVar[5]*2, 0, TAU); cx.fill();
+  }
+  cx.restore();
+}
+
+// 3) Spiral shell with ribs
+function drawSpiralShell(cx,g,fill,stroke){
+  cx.save();
+  const turns = 2.2 + g.specVar[0]*2;
+  cx.strokeStyle=stroke; cx.lineWidth=1.6;
+  cx.beginPath();
+  for(let t=0;t<1;t+=1/140){
+    const a = t*TAU*turns;
+    const r = 3 + 12*t;
+    const x=r*Math.cos(a), y=r*Math.sin(a);
+    t?cx.lineTo(x,y):cx.moveTo(x,y);
+  }
+  cx.stroke();
+
+  // Ribs
+  cx.strokeStyle=`hsl(${(g.hue+20)%360}deg 40% 55% / 0.7)`; cx.lineWidth=1;
+  for(let i=0;i<11;i++){
+    const t=i/10, a=t*TAU*turns, r=3+12*t;
+    const x=r*Math.cos(a), y=r*Math.sin(a);
+    const nx=Math.cos(a+Math.PI/2), ny=Math.sin(a+Math.PI/2);
+    cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x+nx*3, y+ny*3); cx.stroke();
+  }
+  // Fill shadow
+  cx.globalAlpha=0.35; cx.fillStyle=fill; cx.beginPath(); cx.arc(0,0,12,0,TAU); cx.fill();
+  cx.restore();
+}
+
+// 4) Leaf/Frond with veins
+function drawLeafFrond(cx,g,fill,stroke){
+  cx.save();
+  cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=1.4;
+  cx.beginPath();
+  cx.moveTo(-12,0);
+  cx.quadraticCurveTo(0,-10, 12,0);
+  cx.quadraticCurveTo(0,10, -12,0);
+  cx.closePath(); cx.fill(); cx.stroke();
+
+  // Midrib
+  cx.strokeStyle=`hsl(${(g.hue+90)%360}deg 40% 60%)`;
+  cx.beginPath(); cx.moveTo(-10,0); cx.lineTo(10,0); cx.stroke();
+
+  // Veins
+  cx.globalAlpha=0.8; cx.lineWidth=1;
+  for(let i=0;i<6;i++){
+    const t = -8 + i*3.2;
+    cx.beginPath(); cx.moveTo(t,0);
+    cx.quadraticCurveTo(t+2,-4, t+4,-6); cx.stroke();
+    cx.beginPath(); cx.moveTo(t,0);
+    cx.quadraticCurveTo(t+2,4, t+4,6); cx.stroke();
+  }
+  cx.restore();
+}
+
+/* ---------- Rendering main ---------- */
+function drawUniverse(u){
+  // Background grid subtle
+  const [sx0,sy0] = worldToScreen(0,0);
+  const [sx1,sy1] = worldToScreen(u.size,u.size);
+  ctx.fillStyle='rgba(8,12,18,0.8)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate(canvas.width/2, canvas.height/2);
+  ctx.scale(view.z*DPR, view.z*DPR);
+  ctx.translate(-view.x, -view.y);
+
+  // Domain bounds
+  ctx.strokeStyle='rgba(125,211,252,0.08)'; ctx.lineWidth=2/view.z/DPR;
+  ctx.strokeRect(0,0,u.size,u.size);
+
+  // Food
+  ctx.fillStyle='rgba(125,255,160,0.8)';
+  for(const f of u.food){
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath(); ctx.arc(f.x,f.y, 1.5+f.v*0.05, 0, TAU); ctx.fill();
+  }
+
+  // Portals
+  for(const h of u.holes){
+    const grad = ctx.createRadialGradient(h.x,h.y,4, h.x,h.y,h.r);
+    grad.addColorStop(0, `rgba(167,139,250,0.9)`);
+    grad.addColorStop(0.5, `rgba(56,189,248,0.4)`);
+    grad.addColorStop(1, `rgba(2,6,23,0.2)`);
+    ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(h.x,h.y,h.r,0,TAU); ctx.fill();
+    ctx.strokeStyle='rgba(125,211,252,0.5)'; ctx.lineWidth=1.5/view.z/DPR;
+    ctx.beginPath();
+    for(let t=0;t<TAU;t+=TAU/64){
+      const r = h.r*0.7 + Math.sin(t*4+simTick*0.05)*2;
+      const x=h.x+Math.cos(t+h.angle)*r, y=h.y+Math.sin(t+h.angle)*r;
+      t===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.closePath(); ctx.stroke();
+    // Link indicator
+    if(h.link){
+      ctx.fillStyle='rgba(250,204,21,0.8)'; ctx.fillRect(h.x-2,h.y-2,4,4);
+    }
+  }
+
+  // Creatures
+  for(const c of u.creatures){
+    const sp = u.species.get(c.speciesId);
+    const sprite = getSpeciesSprite(u, sp);
+    const scale = (sp.genome.size*params.quality/18);
+    ctx.save();
+    ctx.translate(c.x,c.y);
+    const rot = Math.atan2(c.vy, c.vx);
+    ctx.rotate(rot);
+    ctx.globalAlpha = 0.9 + Math.sin((c.age*0.5 + c.x*0.01))*0.1;
+    if(c.blink>0) ctx.globalAlpha=1;
+    const s = 1.0;
+    ctx.drawImage(sprite, -sprite.width*0.02*s, -sprite.height*0.02*s, sprite.width*0.04*s, sprite.height*0.04*s);
+    ctx.restore();
+  }
+
+  // Selection marker
+  if(selected && selected.u===u && selected.c){
+    ctx.save();
+    ctx.strokeStyle='rgba(251,191,36,0.9)'; ctx.lineWidth=2/view.z/DPR;
+    ctx.beginPath(); ctx.arc(selected.c.x, selected.c.y, 14, 0, TAU); ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function drawMini(){
+  // Network map
+  mNet.clearRect(0,0,miniNet.width,miniNet.height);
+  const nodes = Array.from(multiverse.universes.keys());
+  if(nodes.length===0) return;
+  const w=miniNet.width, h=miniNet.height;
+  // Layout in a circle
+  const r = Math.min(w,h)*0.35;
+  const pos = new Map();
+  nodes.forEach((id,i)=>{
+    const a = TAU*i/nodes.length;
+    pos.set(id, [w/2 + Math.cos(a)*r, h/2 + Math.sin(a)*r]);
+  });
+  // Edges
+  mNet.strokeStyle='rgba(125,211,252,0.5)'; mNet.lineWidth=2;
+  for(const e of multiverse.edges){
+    const [ax,ay]=pos.get(e.a), [bx,by]=pos.get(e.b);
+    mNet.beginPath(); mNet.moveTo(ax,ay); mNet.lineTo(bx,by); mNet.stroke();
+  }
+  // Nodes
+  for(const id of nodes){
+    const [x,y]=pos.get(id);
+    const u = multiverse.universes.get(id);
+    const pop = u.creatures.length;
+    mNet.fillStyle= id===multiverse.currentId? '#fbbf24' : '#7dd3fc';
+    mNet.beginPath(); mNet.arc(x,y, 8 + Math.min(8, pop/80), 0, TAU); mNet.fill();
+    mNet.fillStyle='#cbd5e1';
+    mNet.font=`${12*DPR}px system-ui`; mNet.textAlign='center'; mNet.fillText(id, x, y-14);
+  }
+  // Click to switch
+  miniNet.onclick = (e)=>{
+    const rect=miniNet.getBoundingClientRect();
+    const x=(e.clientX-rect.left)*DPR, y=(e.clientY-rect.top)*DPR;
+    for(const [id,p] of pos){
+      if(Math.hypot(x-p[0], y-p[1])<14*DPR){
+        multiverse.currentId=id; centerView(); break;
+      }
+    }
+  };
+
+  // Local universe density/holes
+  mUni.clearRect(0,0,miniUni.width,miniUni.height);
+  const u = multiverse.currentUniverse();
+  if(!u) return;
+  const sc = Math.min(miniUni.width, miniUni.height)/ (u.size*1.1);
+  function tx(x){ return x*sc + miniUni.width*0.05; }
+  function ty(y){ return y*sc + miniUni.height*0.05; }
+  mUni.strokeStyle='rgba(148,163,184,0.4)'; mUni.strokeRect(tx(0),ty(0), u.size*sc, u.size*sc);
+  mUni.fillStyle='rgba(34,197,94,0.6)';
+  for(const f of u.food){ mUni.fillRect(tx(f.x), ty(f.y), 1,1); }
+  mUni.fillStyle='rgba(251,191,36,0.9)';
+  for(const h of u.holes){ mUni.beginPath(); mUni.arc(tx(h.x), ty(h.y), 6, 0, TAU); mUni.fill(); }
+}
+
+/* ---------- Selection (tap/click) ---------- */
+let selected=null;
+canvas.addEventListener('click', e=>{
+  const rect=canvas.getBoundingClientRect();
+  const [wx,wy]=screenToWorld((e.clientX-rect.left)*DPR, (e.clientY-rect.top)*DPR);
+  const u = multiverse.currentUniverse();
+  // Find nearest creature
+  let best=null, bd=20;
+  for(const c of u.creatures){
+    const d=Math.hypot(c.x-wx, c.y-wy);
+    if(d<bd){ bd=d; best=c; }
+  }
+  if(best){
+    selected={u, c:best};
+    showInspect(best, u);
+  }
+});
+
+/* ---------- Inspect panel ---------- */
+function showInspect(c, u){
+  const sp = u.species.get(c.speciesId);
+  const parent = sp.parent? u.species.get(sp.parent): null;
+  const traits = sp.genome;
+  $inspect.innerHTML = `
+    <div><b>${sp.name}</b> <span class="small">[Species #${sp.id}]</span></div>
+    <div class="small">Parent: ${parent? parent.name+" (#"+parent.id+")":"— root"}</div>
+    <div class="small">Diet: ${["Herbivore","Predator","Omnivore"][traits.diet]}</div>
+    <div class="small">Morph: ${["Radiate","Bilateral","Orbital","Shell","Frond"][traits.morph]}</div>
+    <div class="small">Hue/Sat/Lum: ${traits.hue} / ${traits.sat.toFixed(2)} / ${traits.lum.toFixed(2)}</div>
+    <div class="small">Size: ${traits.size.toFixed(1)}  Speed: ${traits.speed.toFixed(1)}  Sense: ${traits.sense.toFixed(0)}</div>
+    <div class="small">Creature age: ${c.age.toFixed(1)}  energy: ${c.energy.toFixed(0)}</div>
+    <div class="small">Born: ${sp.totalBorn} • Deaths: ${sp.totalDeaths} • Best age: ${sp.bestAge.toFixed(1)} • Expansions: ${sp.expansions}</div>
+  `;
+}
+
+/* ---------- Save/Load ---------- */
+function saveState(){
+  try{
+    const data = {
+      globalSeed, simTick, params,
+      universes: Array.from(multiverse.universes.values()).map(u=>({
+        id: u.id, seed: u.seed, size:u.size,
+        creatures: u.creatures.map(c=>({x:c.x,y:c.y,vx:c.vx,vy:c.vy,ang:c.ang,energy:c.energy,age:c.age,speciesId:c.speciesId,cooldown:c.cooldown})),
+        food: u.food, // small objects
+        species: Array.from(u.species.values()).map(sp=>({id:sp.id,name:sp.name,parent:sp.parent,birthTick:sp.birthTick,totalBorn:sp.totalBorn,totalDeaths:sp.totalDeaths,bestAge:sp.bestAge,expansions:sp.expansions,genome:sp.genome}))
+      })),
+      edges: multiverse.edges.map(e=>({a:e.a,b:e.b}))
+    };
+    localStorage.setItem('multiverseSave', JSON.stringify(data));
+    logLine("Saved.");
+  }catch(e){ alert("Save failed: "+e); }
+}
+function loadState(){
+  try{
+    const s = localStorage.getItem('multiverseSave');
+    if(!s){ alert("No save found."); return; }
+    const data = JSON.parse(s);
+    globalSeed=data.globalSeed; globalRng=mulberry32(globalSeed); simTick=data.simTick||0;
+    // Rebuild
+    multiverse.universes.clear(); multiverse.edges=[];
+    for(const uo of data.universes){
+      const u = new Universe(uo.id, uo.seed, uo.size);
+      u.food = uo.food||[];
+      u.species.clear();
+      for(const sp of uo.species){ u.species.set(sp.id, {...sp, cachedSprite:null, spriteScale:1}); }
+      u.creatures = uo.creatures.map(c=>({...c, id:(u.id+"-"+Math.random()).slice(0,18)}));
+      multiverse.universes.set(u.id, u);
+    }
+    for(const e of data.edges){ multiverse.connect(e.a, e.b); }
+    multiverse.currentId = Math.min(...Array.from(multiverse.universes.keys()));
+    drawMini();
+    logLine("Loaded.");
+  }catch(e){ alert("Load failed: "+e); }
+}
+
+/* ---------- View helpers ---------- */
+function centerView(){
+  const u = multiverse.currentUniverse(); if(!u) return;
+  view.x=u.size/2; view.y=u.size/2; view.z= Math.min(canvas.width, canvas.height)/(u.size*0.9)/DPR;
+}
+
+/* ---------- Main loop (fixed-step) ---------- */
+let simTick=0, acc=0, last=performance.now()/1000;
+function stepOnce(){ simulate(FIXED_DT); render(); }
+function simulate(dt){
+  // Update a subset to keep perf when universes grow; always current + any linked
+  const active = new Set([multiverse.currentId]);
+  for(const e of multiverse.edges){
+    if(e.a===multiverse.currentId) active.add(e.b);
+    if(e.b===multiverse.currentId) active.add(e.a);
+  }
+  for(const id of active){ const u=multiverse.universes.get(id); if(u) u.step(dt); }
+  simTick++;
+}
+function render(){
+  resize(); resizeMini();
+  const u = multiverse.currentUniverse();
+  drawUniverse(u);
+  drawMini();
+  $tick.textContent="tick "+simTick;
+  $pop.textContent="pop "+u.creatures.length;
+  $uni.textContent="universes "+multiverse.universes.size;
+}
+
+function frame(){
+  const now=performance.now()/1000;
+  acc += Math.min(0.25, now-last); last=now;
+  if(running){
+    const step = FIXED_DT / Math.max(0.25, simSpeed); // higher speed = more steps per frame
+    while(acc>=step){ simulate(step); acc-=step; }
+  }
+  render();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- Kickoff ---------- */
+centerView();
+updateButtons();
+logLine("Welcome to the ∞ Multiverse Evolver. Life finds a way. 🌌");
+requestAnimationFrame(frame);
+
+})(); // IIFE end
+</script>
+</body>
+</html>
