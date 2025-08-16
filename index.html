@@ -3,17 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>∞ Multiverse Evolver — Fullscreen Glass UI</title>
+<title>∞ Multiverse Evolver — Clean Draw, Real Wipe, Map Card</title>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <style>
   :root{
-    /* UI */
     --bg:#050910; --text:#e9edf4; --muted:#9fb3c7;
     --btn:#0b1220; --btn-border:#1e293b; --glass:#0b1220cc; --glass-strong:#0b1220e6;
-    --accent:#7dd3fc; --accent2:#a78bfa; --gold:#fbbf24; --success:#34d399; --danger:#fb7185;
-    /* World contrast palette */
-    --space1:#031126; --space2:#071a36; --space3:#020814;
-    --grid:#6ee7ff;
+    --accent:#7dd3fc; --accent2:#a78bfa; --gold:#fbbf24; --danger:#fb7185;
+    --space1:#031126; --space3:#020814;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
@@ -29,7 +26,7 @@
   #chips{position:fixed; top:10px; left:10px; display:flex; gap:6px; z-index:10}
   .chip{background:#0b1220b8; border:1px solid var(--btn-border); color:var(--muted);
         padding:6px 8px; border-radius:9px; font-size:12px; backdrop-filter:blur(6px)}
-  /* Floating action buttons (more visible) */
+  /* FABs */
   .fab{position:fixed; right:12px; width:56px; height:56px; border-radius:50%;
        background:linear-gradient(#0f172a,#0b1220); border:1px solid #2b3a52; color:#eaf2ff;
        display:grid; place-items:center; font-size:22px; z-index:12; box-shadow:0 12px 24px #0009}
@@ -39,29 +36,25 @@
   #fabMap{bottom:142px}
   #fabNew{bottom:206px}
   #fabCenter{bottom:270px}
-  /* Backdrop shade for drawer (tap to close) */
+  /* Backdrop shade (for drawer) */
   #shade{position:fixed; inset:0; background:rgba(3,10,20,0.45); backdrop-filter:blur(2px);
          opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:19}
   #shade.show{opacity:1; pointer-events:auto}
   /* Drawer (bottom sheet) */
   #drawer{position:fixed; left:0; right:0; bottom:-72vh; height:min(74vh, 720px);
-          background:var(--glass); border-top:1px solid #223046; border-radius:14px 14px 0 0;
+          background:#0b1220cc; border-top:1px solid #223046; border-radius:14px 14px 0 0;
           z-index:20; transition:bottom .28s ease; backdrop-filter:blur(12px)}
   #drawer.open{bottom:0}
-  /* Drawer header with close button */
   #head{display:flex; align-items:center; justify-content:space-between; padding:8px 12px 0 12px}
   #dragbar{height:22px; display:grid; place-items:center; flex:1}
   #dragbar .bar{width:44px; height:5px; border-radius:5px; background:#415a77}
   #closeBtn{border:1px solid #2b3a52; background:#0b1220; color:#e9edf4; width:36px; height:36px; border-radius:10px; font-size:18px}
-  /* Tabs */
   #tabs{display:flex; gap:8px; padding:8px 12px}
   .tab{flex:1; text-align:center; padding:10px 8px; border-radius:10px; border:1px solid #2b3a52;
        background:#0b122060; color:#cfe3ff}
   .tab.active{background:#12213b; color:#fff}
-  /* Drawer content areas */
   .page{display:none; padding:8px 12px 16px 12px; height:calc(100% - 88px); overflow:auto}
   .page.show{display:block}
-  /* Controls: rows & big sliders */
   .section{margin-top:8px}
   .row{display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; margin:12px 0}
   .label{font-size:14px; color:#d7e4ff}
@@ -73,18 +66,22 @@
      background:linear-gradient(#22d3ee,#3b82f6); border:2px solid #071424; margin-top:-11px; box-shadow:0 3px 8px #000a}
   input[type=range]::-moz-range-thumb{width:32px; height:32px; border-radius:50%;
      background:linear-gradient(#22d3ee,#3b82f6); border:2px solid #071424; box-shadow:0 3px 8px #000a}
-  /* Buttons inside pages */
   .btn{border:1px solid #2b3a52; background:#0b1220; color:#e9edf4; border-radius:10px; padding:10px 12px; font-size:14px}
   .btnRow{display:flex; gap:8px; flex-wrap:wrap}
-  /* Panels translucent */
   .panel{background:#0b1220a6; border:1px solid #20314b; border-radius:12px; padding:10px}
   #log{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; max-height:140px; overflow:auto; white-space:pre-wrap}
-  /* Mini canvases */
   #miniWrap{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px}
   canvas.mini{width:100%;height:140px;background:#0b1220a0;border:1px solid #20314b;border-radius:10px}
-  /* Help toast */
   #toast{position:fixed; left:50%; transform:translateX(-50%); bottom:12px; background:#0b1220e0; border:1px solid #1e293b; border-radius:10px; padding:8px 12px; font-size:13px; color:#cbd5e1; z-index:25; display:none}
   #toast.show{display:block}
+  /* Floating Map Card (separate from drawer) */
+  #mapCard{position:fixed; top:12px; right:12px; width:min(420px, 84vw); background:#0b1220cc;
+           border:1px solid #223046; border-radius:12px; padding:10px; backdrop-filter:blur(10px); z-index:21; display:none}
+  #mapCard.show{display:block}
+  #mapCardHeader{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px}
+  #mapClose{width:32px; height:32px; border-radius:8px; border:1px solid #2b3a52; background:#0b1220; color:#e9edf4}
+  #mapGrid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  #mapGrid canvas{width:100%; height:140px; background:#0b1220a0; border:1px solid #20314b; border-radius:10px}
 </style>
 </head>
 <body>
@@ -99,14 +96,26 @@
 
     <button id="fabCenter" class="fab" title="Center">⊙</button>
     <button id="fabNew" class="fab" title="New universe">⊕</button>
-    <button id="fabMap" class="fab" title="Mini-maps">🗺</button>
-    <button id="fabGear" class="fab" title="Menu">⚙︎</button>
+    <button id="fabMap" class="fab" title="Map">🗺</button>
+    <button id="fabGear" class="fab" title="Settings">⚙︎</button>
     <button id="fabPlay" class="fab" title="Play/Pause">▶︎</button>
 
     <div id="toast">Double-tap to play/pause • Pinch to zoom • Drag to pan</div>
   </div>
 
-  <!-- Backdrop shade -->
+  <!-- Map Card -->
+  <div id="mapCard" aria-hidden="true">
+    <div id="mapCardHeader">
+      <div style="font-weight:600">Multiverse Map</div>
+      <button id="mapClose" title="Close">✕</button>
+    </div>
+    <div id="mapGrid">
+      <canvas id="miniNet"></canvas>
+      <canvas id="miniUni"></canvas>
+    </div>
+  </div>
+
+  <!-- Backdrop for drawer -->
   <div id="shade"></div>
 
   <!-- Drawer -->
@@ -117,29 +126,13 @@
       <button id="closeBtn" title="Close">✕</button>
     </div>
     <div id="tabs">
-      <button class="tab active" data-page="pageWorld">Play & World</button>
-      <button class="tab" data-page="pageParams">Parameters</button>
+      <button class="tab active" data-page="pageParams">Parameters</button>
       <button class="tab" data-page="pageInspect">Inspect & Log</button>
+      <button class="tab" data-page="pageWorld">World</button>
     </div>
 
     <!-- Pages -->
-    <div id="pageWorld" class="page show">
-      <div class="btnRow">
-        <button class="btn" id="btnSave">Save</button>
-        <button class="btn" id="btnLoad">Load</button>
-        <button class="btn" id="btnWipe" title="Clear local save">Wipe</button>
-        <button class="btn" id="btnStep">Step</button>
-        <button class="btn" id="btnHelp">Help</button>
-      </div>
-      <div class="section">
-        <div id="miniWrap">
-          <canvas id="miniNet" class="mini" title="Tap a node to switch universes"></canvas>
-          <canvas id="miniUni" class="mini" title="Local portals & density"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <div id="pageParams" class="page">
+    <div id="pageParams" class="page show">
       <div class="panel">
         <div class="row"><div class="label">Mutation</div><div class="val" id="v_mut">0.08</div><input id="pmut" type="range" min="0" max="1" step="0.005" value="0.08"></div>
         <div class="row"><div class="label">Food rate</div><div class="val" id="v_food">1.10</div><input id="pfood" type="range" min="0" max="3" step="0.01" value="1.10"></div>
@@ -147,6 +140,13 @@
         <div class="row"><div class="label">Migration</div><div class="val" id="v_mig">0.25</div><input id="pmig" type="range" min="0" max="1" step="0.01" value="0.25"></div>
         <div class="row"><div class="label">Cap/pop</div><div class="val" id="v_cap">260</div><input id="pcap" type="range" min="40" max="600" step="10" value="260"></div>
         <div class="row"><div class="label">Quality</div><div class="val" id="v_qual">1.10</div><input id="pqual" type="range" min="0.5" max="1.6" step="0.05" value="1.10"></div>
+      </div>
+      <div class="btnRow" style="margin-top:10px">
+        <button class="btn" id="btnSave">Save</button>
+        <button class="btn" id="btnLoad">Load</button>
+        <button class="btn" id="btnWipe" title="Reset world">Wipe</button>
+        <button class="btn" id="btnStep">Step</button>
+        <button class="btn" id="btnHelp">Help</button>
       </div>
     </div>
 
@@ -157,15 +157,13 @@
         <div id="log"></div>
       </div>
     </div>
+
+    <div id="pageWorld" class="page">
+      <div class="panel">Use the 🗺 Map button to open a floating map card without closing the sim view.</div>
+    </div>
   </aside>
 
 <script>
-/* ============================================================
-   ∞ Multiverse Evolver — Fullscreen + Glass UI + Closeable Drawer
-   - Drawer close: ✕ button, tap backdrop, or swipe down (snaps).
-   - Higher contrast world colors and neon portals.
-   - Tabs inside the drawer. Big, thumb-friendly sliders.
-   ============================================================ */
 (function(){
 'use strict';
 
@@ -188,6 +186,7 @@ const $fabPlay=q('#fabPlay'), $fabGear=q('#fabGear'), $fabMap=q('#fabMap'), $fab
 const $toast=q('#toast'), $drawer=q('#drawer'), $shade=q('#shade'), $close=q('#closeBtn');
 const $tabs=[...document.querySelectorAll('.tab')];
 const pages={ pageWorld:q('#pageWorld'), pageParams:q('#pageParams'), pageInspect:q('#pageInspect') };
+const $mapCard=q('#mapCard'), $mapClose=q('#mapClose');
 const miniNet=q('#miniNet'), miniUni=q('#miniUni'); const mNet=miniNet.getContext('2d'), mUni=miniUni.getContext('2d');
 const $log=q('#log'), $inspect=q('#inspect');
 const sliders = {
@@ -197,7 +196,7 @@ const sliders = {
 function logLine(s){ $log.textContent=(s+"\n"+$log.textContent).slice(0,6000); }
 
 /* ---------- Drawer: open/close & swipe ---------- */
-let drawerOpen=false, dragStartY=0, dragStartBottom=0, draggingDrawer=false;
+let drawerOpen=false, dragStartY=0, draggingDrawer=false;
 function setDrawer(open){
   drawerOpen=open;
   $drawer.classList.toggle('open', open);
@@ -205,41 +204,21 @@ function setDrawer(open){
   $shade.classList.toggle('show', open);
 }
 $fabGear.onclick=()=>setDrawer(!drawerOpen);
-$fabMap.onclick=()=>{ setDrawer(true); activateTab('pageWorld'); requestAnimationFrame(drawMini); };
 $close.onclick=()=>setDrawer(false);
 $shade.onclick=()=>setDrawer(false);
 
-// Swipe down on the drag bar to close
+// swipe down to close
 const dragbar = q('#dragbar');
 dragbar.addEventListener('touchstart', e=>{
   if(e.touches.length!==1) return;
-  draggingDrawer=true;
-  dragStartY=e.touches[0].clientY;
-  const rect=$drawer.getBoundingClientRect(); // distance from bottom to window bottom
-  dragStartBottom = window.innerHeight - rect.top - rect.height; // should be 0 when open
+  draggingDrawer=true; dragStartY=e.touches[0].clientY;
 },{passive:true});
 dragbar.addEventListener('touchmove', e=>{
   if(!draggingDrawer) return;
   const dy = e.touches[0].clientY - dragStartY;
-  const h = $drawer.getBoundingClientRect().height;
-  // move bottom between 0 (open) and -h (closed)
-  const bottom = Math.max(-h, Math.min(0, -dy));
-  $drawer.style.transition='none';
-  $drawer.style.bottom = bottom + 'px';
-  $shade.style.opacity = String(1 - Math.min(1, Math.abs(bottom)/h));
+  if(dy>50){ draggingDrawer=false; setDrawer(false); }
 },{passive:true});
-dragbar.addEventListener('touchend', ()=>{
-  if(!draggingDrawer) return; draggingDrawer=false;
-  const h = $drawer.getBoundingClientRect().height;
-  const bottom = parseFloat($drawer.style.bottom || '0');
-  $drawer.style.transition='';
-  // snap based on how far dragged
-  if(Math.abs(bottom) > h*0.28){ // close
-    $drawer.style.bottom=''; setDrawer(false);
-  }else{ // reopen
-    $drawer.style.bottom=''; setDrawer(true);
-  }
-});
+dragbar.addEventListener('touchend', ()=>{ draggingDrawer=false; }, {passive:true});
 
 /* ---------- Tabs ---------- */
 function activateTab(pageId){
@@ -247,6 +226,16 @@ function activateTab(pageId){
   Object.entries(pages).forEach(([id,el])=> el.classList.toggle('show', id===pageId));
 }
 $tabs.forEach(t=>t.addEventListener('click', ()=>activateTab(t.dataset.page)));
+
+/* ---------- Map Card (separate from drawer) ---------- */
+function toggleMapCard(force){
+  const show = force!==undefined ? force : !$mapCard.classList.contains('show');
+  $mapCard.classList.toggle('show', show);
+  $mapCard.setAttribute('aria-hidden', String(!show));
+  if(show) drawMini();
+}
+$fabMap.onclick=()=>toggleMapCard();
+$mapClose.onclick=()=>toggleMapCard(false);
 
 /* ---------- Toast hint ---------- */
 setTimeout(()=>{ $toast.classList.add('show'); setTimeout(()=> $toast.classList.remove('show'), 3000); }, 700);
@@ -305,11 +294,12 @@ bindSlider(sliders.pmig,sliders.v_mig,'migration');
 bindSlider(sliders.pcap,sliders.v_cap,'cap',v=>String(v));
 bindSlider(sliders.pqual,sliders.v_qual,'quality',v=>v.toFixed(2));
 
-/* ---------- Buttons in menu ---------- */
-q('#btnHelp').onclick=()=>alert("Controls:\n• Double-tap to play/pause\n• Drag to pan • Pinch/scroll to zoom\n• Tap a creature to inspect\n• Use tabs for World / Parameters / Inspect");
+/* ---------- Buttons ---------- */
+q('#btnHelp').onclick=()=>alert("Controls:\n• Double-tap to play/pause\n• Drag to pan • Pinch/scroll to zoom\n• Tap a creature to inspect\n• ⚙︎ opens Settings drawer • 🗺 toggles Map card");
 q('#btnSave').onclick=()=>saveState();
 q('#btnLoad').onclick=()=>loadState();
-q('#btnWipe').onclick=()=>{ localStorage.removeItem('multiverseSave'); logLine("Local save cleared."); };
+q('#btnWipe').onclick=()=>wipeWorld();
+q('#btnStep').onclick=()=>{ if(running) togglePlay(); stepOnce(); };
 
 /* ---------- PRNG & helpers ---------- */
 function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,61); return ((t^t>>>14)>>>0)/4294967296; } }
@@ -322,14 +312,14 @@ function speciesName(r){ return pick(r,NAME_A)+pick(r,NAME_B); }
 
 /* ---------- Genetics ---------- */
 function randomGenome(r){
-  const morph=randInt(r,0,4), hue=randInt(r,0,360), sat=rndRange(r,0.65,1), lum=rndRange(r,0.5,0.8); // more vivid
+  const morph=randInt(r,0,4), hue=randInt(r,0,360), sat=rndRange(r,0.65,1), lum=rndRange(r,0.5,0.8);
   const size=rndRange(r,8,18), speed=rndRange(r,18,52), sense=rndRange(r,70,150);
   const dietR=r(); const diet=dietR<0.55?0:(dietR<0.8?2:1);
   const specVar=new Array(6).fill(0).map(()=>rndRange(r,0,1));
   return {morph,hue,sat,lum,size,speed,sense,diet,specVar};
 }
 function mutateGenome(p,r,rate){
-  const g=JSON.parse(JSON.stringify(p)); function j(v,a){return v+(r()*2-1)*a*rate;}
+  const g=JSON.parse(JSON.stringify(p)); const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)); function j(v,a){return v+(r()*2-1)*a*rate;}
   if(r()<rate*0.6) g.morph=(g.morph+(r()<0.5?-1:1)+5)%5;
   g.hue=(g.hue+randInt(r,-22,22)+360)%360; g.sat=clamp(j(g.sat,0.28),0.3,1); g.lum=clamp(j(g.lum,0.22),0.35,0.88);
   g.size=clamp(j(g.size,6),6,28); g.speed=clamp(j(g.speed,18),8,70); g.sense=clamp(j(g.sense,55),30,220);
@@ -345,11 +335,12 @@ function makeSpecies(r,parentId=null,parentGenome=null){
   const id=nextSpeciesId++, name=speciesName(r);
   return {id,name,genome,parent:parentId,birthTick:simTick,totalBorn:0,totalDeaths:0,bestAge:0,expansions:0,cachedSprite:null,spriteScale:1};
 }
+const TAU=Math.PI*2;
 function makeCreature(u,sp,x,y){
   const ang=u.rng()*TAU;
   return {x,y,vx:Math.cos(ang)*0.1,vy:Math.sin(ang)*0.1,ang,energy:60+u.rng()*40,age:0,speciesId:sp.id,cooldown:0,blink:0,id:(u.id+"-"+Math.random()).slice(0,18)};
 }
-function makeFood(u){ return {x:rndRange(u.rng,0,u.size), y:rndRange(u.rng,0,u.size), v:rndRange(u.rng,6,12)}; } // brighter & bigger reward
+function makeFood(u){ return {x:rndRange(u.rng,0,u.size), y:rndRange(u.rng,0,u.size), v:rndRange(u.rng,6,12)}; }
 
 /* ---------- Universe ---------- */
 class Universe{
@@ -373,7 +364,7 @@ class Universe{
     for(let i=0;i<n;i++){
       const pos=[rndRange(this.rng,120,this.size-120), this.rng()<0.5?rndRange(this.rng,40,100):rndRange(this.rng,this.size-100,this.size-40)];
       if(this.rng()<0.5) pos.reverse();
-      this.holes.push({x:pos[0],y:pos[1],r:46,angle:this.rng()*TAU,link:null}); // bigger & brighter
+      this.holes.push({x:pos[0],y:pos[1],r:46,angle:this.rng()*TAU,link:null});
     }
   }
   clearGrid(){ this.grid.clear(); }
@@ -410,7 +401,7 @@ class Universe{
       let ax=0,ay=0; const r1=this.rng(); c.ang+=(r1-0.5)*0.2; ax+=Math.cos(c.ang)*0.55; ay+=Math.sin(c.ang)*0.55;
       if(tx!=null){ const dx=tx-c.x,dy=ty-c.y,d=Math.hypot(dx,dy)+1e-6; ax+=dx/d*1.25; ay+=dy/d*1.25; }
       const m=110; if(c.x<m) ax+=0.65; if(c.y<m) ay+=0.65; if(c.x>this.size-m) ax-=0.65; if(c.y>this.size-m) ay-=0.65;
-      c.vx=clamp(c.vx+ax*dt,-2.2,2.2); c.vy=clamp(c.vy+ay*dt,-2.2,2.2);
+      c.vx=Math.max(-2.2,Math.min(2.2,c.vx+ax*dt)); c.vy=Math.max(-2.2,Math.min(2.2,c.vy+ay*dt));
       const spd=g.speed*0.021, vlen=Math.hypot(c.vx,c.vy); if(vlen>0){ c.vx=c.vx/vlen*spd; c.vy=c.vy/vlen*spd; }
       c.x+=c.vx; c.y+=c.vy;
 
@@ -488,9 +479,8 @@ const multiverse={
     const sp=toU.species.get(creature.speciesId); if(sp) sp.expansions++; toU.log(`Migration: one ${sp?sp.name:"organism"} arrived.`);
   }
 };
-multiverse.ensureUniverse(1); multiverse.ensureUniverse(2); multiverse.connect(1,2);
 
-/* ---------- Species sprites (complex silhouettes, brighter) ---------- */
+/* ---------- Species sprites (bright) ---------- */
 function getSpeciesSprite(u,sp){
   if(!sp) return null; if(sp.cachedSprite && sp.spriteScale===params.quality) return sp.cachedSprite;
   const g=sp.genome, scale=g.size*params.quality, sz=Math.max(36, Math.min(200, (scale*7.5)|0));
@@ -500,42 +490,50 @@ function getSpeciesSprite(u,sp){
   const stroke=`hsl(${(g.hue+24)%360}deg 60% 20%)`;
   cx.shadowColor=`hsl(${g.hue}deg 100% 60% / 0.35)`; cx.shadowBlur=8;
   switch(g.morph){ case 0: drawRadiate(cx,g,fill,stroke); break; case 1: drawBilateral(cx,g,fill,stroke); break; case 2: drawOrbital(cx,g,fill,stroke); break; case 3: drawSpiralShell(cx,g,fill,stroke); break; case 4: drawLeafFrond(cx,g,fill,stroke); break; }
-  // eye
   cx.save(); cx.rotate((g.specVar[4]-0.5)*0.8); cx.fillStyle='white'; cx.beginPath(); cx.ellipse(4,-2,2.6,1.7,0,0,TAU); cx.fill();
   cx.fillStyle='black'; cx.beginPath(); cx.ellipse(4,-2,1.1,0.75,0,0,TAU); cx.fill(); cx.restore();
   sp.cachedSprite=oc; sp.spriteScale=params.quality; return oc;
 }
-function superPath(cx,m,n1,n2,n3,steps,scale=12,jitter=0){ cx.beginPath(); for(let i=0;i<=steps;i++){ const phi=TAU*i/steps,a=1,b=1; const t1=Math.pow(Math.abs(Math.cos(m*phi/4)/a),n2); const t2=Math.pow(Math.abs(Math.sin(m*phi/4)/b),n3); let r=Math.pow(t1+t2,-1/n1); if(!isFinite(r)) r=0; if(jitter) r*=1+(Math.sin(phi*5+(steps%13))*jitter); const x=r*Math.cos(phi)*scale,y=r*Math.sin(phi)*scale; i?cx.lineTo(x,y):cx.moveTo(x,y);} cx.closePath(); }
-function drawRadiate(cx,g,fill,stroke){ const m=5+(g.specVar[0]*5|0); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2.0; superPath(cx,m,0.6+g.specVar[1]*1.4,5,12,240,16,0.05*g.specVar[2]); cx.fill(); cx.stroke(); cx.save(); cx.globalAlpha=0.28; cx.fillStyle=`hsl(${(g.hue+310)%360}deg 85% 70%)`; superPath(cx,m+1,0.8,8,4,200,10,0); cx.fill(); cx.restore(); cx.strokeStyle=`hsl(${g.hue}deg 85% 60% / 0.7)`; cx.lineWidth=1.3; const arms=6+(g.specVar[3]*6|0); for(let i=0;i<arms;i++){ const a=TAU*i/arms+g.specVar[4]*0.7; cx.beginPath(); cx.moveTo(Math.cos(a)*6,Math.sin(a)*6); const len=11+g.specVar[5]*17; for(let k=1;k<=4;k++){ const t=k/4; const x=Math.cos(a)*(6+t*len)+Math.sin(a*3+t*2)*1.6; const y=Math.sin(a)*(6+t*len)+Math.cos(a*4+t*3)*1.6; cx.lineTo(x,y);} cx.stroke(); } }
-function drawBilateral(cx,g,fill,stroke){ cx.save(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2.2; cx.beginPath(); cx.moveTo(10,0); cx.bezierCurveTo(6,-8,-4,-10,-10,0); cx.bezierCurveTo(-4,10,6,8,10,0); cx.closePath(); cx.fill(); cx.stroke(); const legs=3+(g.specVar[0]*5|0); cx.strokeStyle=`hsl(${(g.hue+40)%360}deg 60% 60%)`; cx.lineWidth=1.4; for(let i=0;i<legs;i++){ const y=-6+i*(12/(legs-1)); cx.beginPath(); cx.moveTo(-4,y); cx.quadraticCurveTo(-12,y-2,-14,y+(i%2?3:-3)); cx.moveTo(4,y); cx.quadraticCurveTo(12,y+2,14,y+(i%2?-3:3)); cx.stroke(); } cx.beginPath(); cx.moveTo(6,-3); cx.quadraticCurveTo(12,-10,14,-12); cx.moveTo(6,3); cx.quadraticCurveTo(12,10,14,12); cx.stroke(); cx.globalAlpha=0.34; cx.fillStyle='white'; for(let i=0;i<5;i++){ cx.fillRect(-2+i*2-5,-8,1,16);} cx.restore(); }
-function drawOrbital(cx,g,fill,stroke){ cx.save(); const ring=10+g.specVar[0]*8; cx.strokeStyle=`hsl(${g.hue}deg 90% 65% / 0.9)`; cx.lineWidth=1.6; cx.beginPath(); cx.ellipse(0,0,ring,ring*0.6,g.specVar[1]*0.9,0,TAU); cx.stroke(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2.0; cx.beginPath(); cx.arc(0,0,7+g.specVar[2]*4,0,TAU); cx.fill(); cx.stroke(); const pods=3+(g.specVar[3]*5|0); cx.fillStyle=`hsl(${(g.hue+260)%360}deg 85% 72%)`; for(let i=0;i<pods;i++){ const a=TAU*i/pods+g.specVar[4]*1.2; cx.beginPath(); cx.arc(Math.cos(a)*ring,Math.sin(a)*ring*0.6,2+g.specVar[5]*2,0,TAU); cx.fill(); } cx.restore(); }
-function drawSpiralShell(cx,g,fill,stroke){ cx.save(); const turns=2.2+g.specVar[0]*2; cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.beginPath(); for(let t=0;t<1;t+=1/140){ const a=t*TAU*turns, r=3+12*t, x=r*Math.cos(a), y=r*Math.sin(a); t?cx.lineTo(x,y):cx.moveTo(x,y);} cx.stroke(); cx.strokeStyle=`hsl(${(g.hue+20)%360}deg 60% 58% / 0.8)`; cx.lineWidth=1.2; for(let i=0;i<11;i++){ const t=i/10,a=t*TAU*turns,r=3+12*t,x=r*Math.cos(a),y=r*Math.sin(a),nx=Math.cos(a+Math.PI/2),ny=Math.sin(a+Math.PI/2); cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x+nx*3,y+ny*3); cx.stroke(); } cx.globalAlpha=0.4; cx.fillStyle=fill; cx.beginPath(); cx.arc(0,0,12,0,TAU); cx.fill(); cx.restore(); }
-function drawLeafFrond(cx,g,fill,stroke){ cx.save(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.beginPath(); cx.moveTo(-12,0); cx.quadraticCurveTo(0,-10,12,0); cx.quadraticCurveTo(0,10,-12,0); cx.closePath(); cx.fill(); cx.stroke(); cx.strokeStyle=`hsl(${(g.hue+90)%360}deg 55% 62%)`; cx.beginPath(); cx.moveTo(-10,0); cx.lineTo(10,0); cx.stroke(); cx.globalAlpha=0.9; cx.lineWidth=1.2; for(let i=0;i<6;i++){ const t=-8+i*3.2; cx.beginPath(); cx.moveTo(t,0); cx.quadraticCurveTo(t+2,-4,t+4,-6); cx.stroke(); cx.beginPath(); cx.moveTo(t,0); cx.quadraticCurveTo(t+2,4,t+4,6); cx.stroke(); } cx.restore(); }
+function superPath(cx,m,n1,n2,n3,steps,scale=12,jitter=0){ cx.beginPath(); for(let i=0;i<=steps;i++){ const TAU=Math.PI*2; const phi=TAU*i/steps,a=1,b=1; const t1=Math.pow(Math.abs(Math.cos(m*phi/4)/a),n2); const t2=Math.pow(Math.abs(Math.sin(m*phi/4)/b),n3); let r=Math.pow(t1+t2,-1/n1); if(!isFinite(r)) r=0; if(jitter) r*=1+(Math.sin(phi*5+(steps%13))*jitter); const x=r*Math.cos(phi)*scale,y=r*Math.sin(phi)*scale; i?cx.lineTo(x,y):cx.moveTo(x,y);} cx.closePath(); }
+function drawRadiate(cx,g,fill,stroke){ const TAU=Math.PI*2; const m=5+(g.specVar[0]*5|0); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2.0; superPath(cx,m,0.6+g.specVar[1]*1.4,5,12,240,16,0.05*g.specVar[2]); cx.fill(); cx.stroke(); cx.save(); cx.globalAlpha=0.28; cx.fillStyle=`hsl(${(g.hue+310)%360}deg 85% 70%)`; superPath(cx,m+1,0.8,8,4,200,10,0); cx.fill(); cx.restore(); cx.strokeStyle=`hsl(${g.hue}deg 85% 60% / 0.7)`; cx.lineWidth=1.3; const arms=6+(g.specVar[3]*6|0); for(let i=0;i<arms;i++){ const a=TAU*i/arms+g.specVar[4]*0.7; cx.beginPath(); cx.moveTo(Math.cos(a)*6,Math.sin(a)*6); const len=11+g.specVar[5]*17; for(let k=1;k<=4;k++){ const t=k/4; const x=Math.cos(a)*(6+t*len)+Math.sin(a*3+t*2)*1.6; const y=Math.sin(a)*(6+t*len)+Math.cos(a*4+t*3)*1.6; cx.lineTo(x,y);} cx.stroke(); } }
+function drawBilateral(cx,g,fill,stroke){ const TAU=Math.PI*2; cx.save(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2.2; cx.beginPath(); cx.moveTo(10,0); cx.bezierCurveTo(6,-8,-4,-10,-10,0); cx.bezierCurveTo(-4,10,6,8,10,0); cx.closePath(); cx.fill(); cx.stroke(); const legs=3+(g.specVar[0]*5|0); cx.strokeStyle=`hsl(${(g.hue+40)%360}deg 60% 60%)`; cx.lineWidth=1.4; for(let i=0;i<legs;i++){ const y=-6+i*(12/(legs-1)); cx.beginPath(); cx.moveTo(-4,y); cx.quadraticCurveTo(-12,y-2,-14,y+(i%2?3:-3)); cx.moveTo(4,y); cx.quadraticCurveTo(12,y+2,14,y+(i%2?-3:3)); cx.stroke(); } cx.beginPath(); cx.moveTo(6,-3); cx.quadraticCurveTo(12,-10,14,-12); cx.moveTo(6,3); cx.quadraticCurveTo(12,10,14,12); cx.stroke(); cx.globalAlpha=0.34; cx.fillStyle='white'; for(let i=0;i<5;i++){ cx.fillRect(-2+i*2-5,-8,1,16);} cx.restore(); }
+function drawOrbital(cx,g,fill,stroke){ const TAU=Math.PI*2; cx.save(); const ring=10+g.specVar[0]*8; cx.strokeStyle=`hsl(${g.hue}deg 90% 65% / 0.9)`; cx.lineWidth=1.6; cx.beginPath(); cx.ellipse(0,0,ring,ring*0.6,g.specVar[1]*0.9,0,TAU); cx.stroke(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2.0; cx.beginPath(); cx.arc(0,0,7+g.specVar[2]*4,0,TAU); cx.fill(); cx.stroke(); const pods=3+(g.specVar[3]*5|0); cx.fillStyle=`hsl(${(g.hue+260)%360}deg 85% 72%)`; for(let i=0;i<pods;i++){ const a=TAU*i/pods+g.specVar[4]*1.2; cx.beginPath(); cx.arc(Math.cos(a)*ring,Math.sin(a)*ring*0.6,2+g.specVar[5]*2,0,TAU); cx.fill(); } cx.restore(); }
+function drawSpiralShell(cx,g,fill,stroke){ const TAU=Math.PI*2; cx.save(); const turns=2.2+g.specVar[0]*2; cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.beginPath(); for(let t=0;t<1;t+=1/140){ const a=t*TAU*turns, r=3+12*t, x=r*Math.cos(a), y=r*Math.sin(a); t?cx.lineTo(x,y):cx.moveTo(x,y);} cx.stroke(); cx.strokeStyle=`hsl(${(g.hue+20)%360}deg 60% 58% / 0.8)`; cx.lineWidth=1.2; for(let i=0;i<11;i++){ const t=i/10,a=t*TAU*turns,r=3+12*t,x=r*Math.cos(a),y=r*Math.sin(a),nx=Math.cos(a+Math.PI/2),ny=Math.sin(a+Math.PI/2); cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x+nx*3,y+ny*3); cx.stroke(); } cx.globalAlpha=0.4; cx.fillStyle=fill; cx.beginPath(); cx.arc(0,0,12,0,TAU); cx.fill(); cx.restore(); }
+function drawLeafFrond(cx,g,fill,stroke){ const TAU=Math.PI*2; cx.save(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.beginPath(); cx.moveTo(-12,0); cx.quadraticCurveTo(0,-10,12,0); cx.quadraticCurveTo(0,10,-12,0); cx.closePath(); cx.fill(); cx.stroke(); cx.strokeStyle=`hsl(${(g.hue+90)%360}deg 55% 62%)`; cx.beginPath(); cx.moveTo(-10,0); cx.lineTo(10,0); cx.stroke(); cx.globalAlpha=0.9; cx.lineWidth=1.2; for(let i=0;i<6;i++){ const t=-8+i*3.2; cx.beginPath(); cx.moveTo(t,0); cx.quadraticCurveTo(t+2,-4,t+4,-6); cx.stroke(); cx.beginPath(); cx.MoveTo; cx.beginPath(); cx.moveTo(t,0); cx.quadraticCurveTo(t+2,4,t+4,6); cx.stroke(); } cx.restore(); }
 
-/* ---------- Rendering (high contrast) ---------- */
+/* ---------- Rendering (now clears every frame) ---------- */
 function drawUniverse(u){
-  // subtle vignette already in CSS background; draw domain & contents
-  ctx.save(); ctx.translate(canvas.width/2,canvas.height/2); ctx.scale(view.z*DPR,view.z*DPR); ctx.translate(-view.x,-view.y);
-  // Domain border brighter
+  // FULL CLEAR to avoid artifacts (important!)
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // world space
+  ctx.save();
+  ctx.translate(canvas.width/2,canvas.height/2);
+  ctx.scale(view.z*DPR,view.z*DPR);
+  ctx.translate(-view.x,-view.y);
+
+  // Border
   ctx.strokeStyle='rgba(110,231,255,0.22)'; ctx.lineWidth=2.2/view.z/DPR; ctx.strokeRect(0,0,u.size,u.size);
 
-  // Food: neon lime dots
+  // Food
   ctx.fillStyle='rgba(172,255,120,0.95)';
-  for(const f of u.food){ ctx.beginPath(); ctx.arc(f.x,f.y, 1.8+f.v*0.05, 0, TAU); ctx.fill(); }
+  for(const f of u.food){ ctx.beginPath(); ctx.arc(f.x,f.y, 1.8+f.v*0.05, 0, Math.PI*2); ctx.fill(); }
 
-  // Portals: brighter neon rings
+  // Portals
   for(const h of u.holes){
     const grad=ctx.createRadialGradient(h.x,h.y,6,h.x,h.y,h.r);
     grad.addColorStop(0,'rgba(147,51,234,0.95)');
     grad.addColorStop(0.45,'rgba(2,132,199,0.75)');
     grad.addColorStop(1,'rgba(2,6,23,0.05)');
-    ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(h.x,h.y,h.r,0,TAU); ctx.fill();
+    ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(h.x,h.y,h.r,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='rgba(56,189,248,0.9)'; ctx.lineWidth=1.8/view.z/DPR; ctx.beginPath();
+    const TAU=Math.PI*2;
     for(let t=0;t<TAU;t+=TAU/64){ const r=h.r*0.68+Math.sin(t*4+simTick*0.06)*2.4; const x=h.x+Math.cos(t+h.angle)*r, y=h.y+Math.sin(t+h.angle)*r; t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
     ctx.closePath(); ctx.stroke(); if(h.link){ ctx.fillStyle='rgba(251,191,36,0.95)'; ctx.fillRect(h.x-2,h.y-2,4,4); }
   }
 
-  // Creatures: full alpha for visibility
+  // Creatures
   for(const c of u.creatures){
     const sp=u.species.get(c.speciesId); if(!sp) continue;
     const sprite=getSpeciesSprite(u,sp); if(!sprite) continue;
@@ -546,16 +544,20 @@ function drawUniverse(u){
   }
 
   if(selected && selected.u===u && selected.c){
-    ctx.save(); ctx.strokeStyle='rgba(251,191,36,0.95)'; ctx.lineWidth=2.2/view.z/DPR; ctx.beginPath(); ctx.arc(selected.c.x,selected.c.y,16,0,TAU); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.strokeStyle='rgba(251,191,36,0.95)'; ctx.lineWidth=2.2/view.z/DPR; ctx.beginPath(); ctx.arc(selected.c.x,selected.c.y,16,0,Math.PI*2); ctx.stroke(); ctx.restore();
   }
   ctx.restore();
 }
 
-/* ---------- Mini-maps ---------- */
-function resizeMini(){ miniNet.width=miniNet.clientWidth*DPR; miniNet.height=miniNet.clientHeight*DPR; miniUni.width=miniUni.clientWidth*DPR; miniUni.height=miniUni.clientHeight*DPR; }
+/* ---------- Mini-maps (used by Map Card) ---------- */
+function resizeMini(){
+  miniNet.width = miniNet.clientWidth*DPR; miniNet.height = miniNet.clientHeight*DPR;
+  miniUni.width = miniUni.clientWidth*DPR; miniUni.height = miniUni.clientHeight*DPR;
+}
 try{ new ResizeObserver(resizeMini).observe(miniNet); new ResizeObserver(resizeMini).observe(miniUni); }catch(_){}
 function drawMini(){
   resizeMini();
+  const TAU=Math.PI*2;
   mNet.clearRect(0,0,miniNet.width,miniNet.height);
   const nodes=Array.from(multiverse.universes.keys()); if(!nodes.length) return;
   const w=miniNet.width,h=miniNet.height,r=Math.min(w,h)*0.35; const pos=new Map();
@@ -592,7 +594,7 @@ function showInspect(c,u){
     <div>Born: ${sp.totalBorn} • Deaths: ${sp.totalDeaths} • Best age: ${sp.bestAge.toFixed(1)} • Expansions: ${sp.expansions}</div>`;
 }
 
-/* ---------- Save/Load ---------- */
+/* ---------- Save/Load/Wipe ---------- */
 function saveState(){
   try{
     const data={simTick,params,
@@ -622,12 +624,21 @@ function loadState(){
     centerView(); drawMini(); logLine("Loaded.");
   }catch(e){ alert("Load failed: "+e); }
 }
+function wipeWorld(){
+  // clear local save AND reset sim state
+  localStorage.removeItem('multiverseSave');
+  simTick=0; nextSpeciesId=1;
+  multiverse.universes.clear(); multiverse.edges=[];
+  multiverse.ensureUniverse(1); multiverse.ensureUniverse(2); multiverse.connect(1,2);
+  multiverse.currentId=1; centerView(); drawMini();
+  logLine("World wiped and rebooted.");
+}
 
 /* ---------- View & loop ---------- */
 function centerView(){ const u=multiverse.currentUniverse(); if(!u) return; resizeCanvas(); view.x=u.size/2; view.y=u.size/2; view.z=Math.min(canvas.width,canvas.height)/(u.size*0.9)/DPR; }
 let simSpeed=1, running=true; function togglePlay(){ running=!running; $fabPlay.textContent=running?"II":"▶︎"; }
 $fabPlay.onclick=togglePlay; $fabCenter.onclick=()=>centerView(); $fabNew.onclick=()=>{ multiverse.addUniverseNearCurrent(); logLine("✦ New universe budded from current"); };
-q('#btnStep').onclick=()=>stepOnce();
+function stepOnce(){ simulate(FIXED_DT); render(); }
 
 const FIXED_DT=0.08; let acc=0, last=performance.now()/1000;
 function simulate(dt){
@@ -636,10 +647,10 @@ function simulate(dt){
   simTick++;
 }
 function render(){
-  resizeCanvas(); const u=multiverse.currentUniverse(); if(u) drawUniverse(u); drawMini();
+  const u=multiverse.currentUniverse(); if(u) drawUniverse(u);
+  if($mapCard.classList.contains('show')) drawMini();
   $tick.textContent="tick "+simTick; $pop.textContent="pop "+(u?u.creatures.length:0); $uni.textContent="universes "+multiverse.universes.size;
 }
-function stepOnce(){ simulate(FIXED_DT); render(); }
 function frame(){
   const now=performance.now()/1000; acc+=Math.min(0.25, now-last); last=now;
   if(running){ const step=FIXED_DT/Math.max(0.25, simSpeed); while(acc>=step){ simulate(step); acc-=step; } }
@@ -647,8 +658,9 @@ function frame(){
 }
 
 /* ---------- Kickoff ---------- */
+multiverse.ensureUniverse(1); multiverse.ensureUniverse(2); multiverse.connect(1,2);
 multiverse.currentId=1; centerView();
-setTimeout(()=>{ $toast.classList.add('show'); setTimeout(()=>$toast.classList.remove('show'), 3000); }, 600);
+setTimeout(()=>{ $toast.classList.add('show'); setTimeout(()=> $toast.classList.remove('show'), 3000); }, 600);
 requestAnimationFrame(frame);
 
 })(); // IIFE end
