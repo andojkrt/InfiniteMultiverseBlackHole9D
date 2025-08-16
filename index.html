@@ -3,63 +3,85 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>∞ Multiverse Evolver — Fullscreen</title>
+<title>∞ Multiverse Evolver — Fullscreen Glass UI</title>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <style>
   :root{
-    --bg:#0b0f16; --muted:#94a3b8; --text:#e5e7eb; --accent:#7dd3fc; --gold:#fbbf24;
-    --btn:#0b1220; --btn-border:#1e293b; --drawer:#0b1220f2;
+    /* UI */
+    --bg:#050910; --text:#e9edf4; --muted:#9fb3c7;
+    --btn:#0b1220; --btn-border:#1e293b; --glass:#0b1220cc; --glass-strong:#0b1220e6;
+    --accent:#7dd3fc; --accent2:#a78bfa; --gold:#fbbf24; --success:#34d399; --danger:#fb7185;
+    /* World contrast palette */
+    --space1:#031126; --space2:#071a36; --space3:#020814;
+    --grid:#6ee7ff;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
   /* Fullscreen stage */
   #stage{position:fixed; inset:0; overflow:hidden; touch-action:none}
   #c{position:absolute; inset:0; width:100%; height:100%;
-      background:radial-gradient(1200px 800px at 30% 30%, #0c1220 0%, #070b12 50%, #05070c 100%)}
-  /* Small status chips (top-left) */
+      background:
+        radial-gradient(1400px 900px at 25% 25%, #123a7a 0%, transparent 65%),
+        radial-gradient(1200px 800px at 75% 60%, #4b2e83 0%, transparent 60%),
+        radial-gradient(1000px 700px at 40% 80%, #0b5e3c 0%, transparent 55%),
+        linear-gradient(180deg, var(--space1), var(--space3))}
+  /* Status chips */
   #chips{position:fixed; top:10px; left:10px; display:flex; gap:6px; z-index:10}
-  .chip{background:#0b1220b0; border:1px solid var(--btn-border); color:var(--muted);
+  .chip{background:#0b1220b8; border:1px solid var(--btn-border); color:var(--muted);
         padding:6px 8px; border-radius:9px; font-size:12px; backdrop-filter:blur(6px)}
-  /* Floating action buttons */
-  .fab{position:fixed; right:12px; width:52px; height:52px; border-radius:50%;
-       background:var(--btn); border:1px solid var(--btn-border); color:var(--text);
-       display:grid; place-items:center; font-size:22px; z-index:12; box-shadow:0 8px 20px #0006}
+  /* Floating action buttons (more visible) */
+  .fab{position:fixed; right:12px; width:56px; height:56px; border-radius:50%;
+       background:linear-gradient(#0f172a,#0b1220); border:1px solid #2b3a52; color:#eaf2ff;
+       display:grid; place-items:center; font-size:22px; z-index:12; box-shadow:0 12px 24px #0009}
   .fab:active{transform:scale(.98)}
   #fabPlay{bottom:14px}
-  #fabGear{bottom:74px}
-  #fabMap{bottom:134px}
-  #fabNew{bottom:194px}
-  #fabCenter{bottom:254px}
+  #fabGear{bottom:78px}
+  #fabMap{bottom:142px}
+  #fabNew{bottom:206px}
+  #fabCenter{bottom:270px}
+  /* Backdrop shade for drawer (tap to close) */
+  #shade{position:fixed; inset:0; background:rgba(3,10,20,0.45); backdrop-filter:blur(2px);
+         opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:19}
+  #shade.show{opacity:1; pointer-events:auto}
   /* Drawer (bottom sheet) */
-  #drawer{position:fixed; left:0; right:0; bottom:-70vh; height:min(72vh, 680px);
-          background:var(--drawer); border-top:1px solid #1e293b; border-radius:14px 14px 0 0;
-          z-index:20; transition:bottom .28s ease; backdrop-filter:blur(8px)}
+  #drawer{position:fixed; left:0; right:0; bottom:-72vh; height:min(74vh, 720px);
+          background:var(--glass); border-top:1px solid #223046; border-radius:14px 14px 0 0;
+          z-index:20; transition:bottom .28s ease; backdrop-filter:blur(12px)}
   #drawer.open{bottom:0}
-  #dragbar{height:22px; display:grid; place-items:center}
-  #dragbar .bar{width:44px; height:5px; border-radius:5px; background:#334155}
-  #drawerContent{padding:10px 14px 14px 14px; overflow:auto; height:calc(100% - 22px)}
-  .section{margin-top:6px}
-  .row{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin:10px 0}
-  .label{font-size:13px; color:#cbd5e1}
-  .val{font-size:13px; color:#a8b3c7; min-width:46px; text-align:right}
-  /* Big, thumb-friendly sliders */
-  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:38px; background:transparent}
-  input[type=range]::-webkit-slider-runnable-track{height:10px; background:#1f2937; border-radius:999px; border:1px solid #334155}
-  input[type=range]::-moz-range-track{height:10px; background:#1f2937; border-radius:999px; border:1px solid #334155}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:28px; height:28px; border-radius:50%;
-     background:linear-gradient(#0ea5e9,#60a5fa); border:2px solid #0b1220; margin-top:-9px; box-shadow:0 2px 6px #0007}
-  input[type=range]::-moz-range-thumb{width:28px; height:28px; border-radius:50%;
-     background:linear-gradient(#0ea5e9,#60a5fa); border:2px solid #0b1220; box-shadow:0 2px 6px #0007}
-  /* Buttons row inside drawer */
-  .btn{border:1px solid var(--btn-border); background:var(--btn); color:var(--text);
-       border-radius:10px; padding:10px 12px; font-size:14px}
+  /* Drawer header with close button */
+  #head{display:flex; align-items:center; justify-content:space-between; padding:8px 12px 0 12px}
+  #dragbar{height:22px; display:grid; place-items:center; flex:1}
+  #dragbar .bar{width:44px; height:5px; border-radius:5px; background:#415a77}
+  #closeBtn{border:1px solid #2b3a52; background:#0b1220; color:#e9edf4; width:36px; height:36px; border-radius:10px; font-size:18px}
+  /* Tabs */
+  #tabs{display:flex; gap:8px; padding:8px 12px}
+  .tab{flex:1; text-align:center; padding:10px 8px; border-radius:10px; border:1px solid #2b3a52;
+       background:#0b122060; color:#cfe3ff}
+  .tab.active{background:#12213b; color:#fff}
+  /* Drawer content areas */
+  .page{display:none; padding:8px 12px 16px 12px; height:calc(100% - 88px); overflow:auto}
+  .page.show{display:block}
+  /* Controls: rows & big sliders */
+  .section{margin-top:8px}
+  .row{display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; margin:12px 0}
+  .label{font-size:14px; color:#d7e4ff}
+  .val{font-size:14px; color:#9cc2ff; min-width:52px; text-align:right}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:42px; background:transparent}
+  input[type=range]::-webkit-slider-runnable-track{height:12px; background:#1b2942; border-radius:999px; border:1px solid #2e456b; box-shadow:inset 0 1px 3px #000a}
+  input[type=range]::-moz-range-track{height:12px; background:#1b2942; border-radius:999px; border:1px solid #2e456b}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:32px; height:32px; border-radius:50%;
+     background:linear-gradient(#22d3ee,#3b82f6); border:2px solid #071424; margin-top:-11px; box-shadow:0 3px 8px #000a}
+  input[type=range]::-moz-range-thumb{width:32px; height:32px; border-radius:50%;
+     background:linear-gradient(#22d3ee,#3b82f6); border:2px solid #071424; box-shadow:0 3px 8px #000a}
+  /* Buttons inside pages */
+  .btn{border:1px solid #2b3a52; background:#0b1220; color:#e9edf4; border-radius:10px; padding:10px 12px; font-size:14px}
   .btnRow{display:flex; gap:8px; flex-wrap:wrap}
-  /* Mini canvases in drawer */
-  #miniWrap{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px}
-  canvas.mini{width:100%;height:140px;background:#0b1220;border:1px solid #1e293b;border-radius:10px}
-  /* Inspect & log boxes */
-  .panel{background:#0b1220; border:1px solid #1e293b; border-radius:10px; padding:10px}
-  #log{font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; max-height:120px; overflow:auto; white-space:pre-wrap}
+  /* Panels translucent */
+  .panel{background:#0b1220a6; border:1px solid #20314b; border-radius:12px; padding:10px}
+  #log{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; max-height:140px; overflow:auto; white-space:pre-wrap}
+  /* Mini canvases */
+  #miniWrap{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px}
+  canvas.mini{width:100%;height:140px;background:#0b1220a0;border:1px solid #20314b;border-radius:10px}
   /* Help toast */
   #toast{position:fixed; left:50%; transform:translateX(-50%); bottom:12px; background:#0b1220e0; border:1px solid #1e293b; border-radius:10px; padding:8px 12px; font-size:13px; color:#cbd5e1; z-index:25; display:none}
   #toast.show{display:block}
@@ -68,23 +90,40 @@
 <body>
   <div id="stage">
     <canvas id="c"></canvas>
+
     <div id="chips">
       <div class="chip" id="statTick">tick 0</div>
       <div class="chip" id="statPop">pop 0</div>
       <div class="chip" id="statUni">universes 0</div>
     </div>
+
     <button id="fabCenter" class="fab" title="Center">⊙</button>
     <button id="fabNew" class="fab" title="New universe">⊕</button>
     <button id="fabMap" class="fab" title="Mini-maps">🗺</button>
-    <button id="fabGear" class="fab" title="Controls">⚙︎</button>
+    <button id="fabGear" class="fab" title="Menu">⚙︎</button>
     <button id="fabPlay" class="fab" title="Play/Pause">▶︎</button>
+
     <div id="toast">Double-tap to play/pause • Pinch to zoom • Drag to pan</div>
   </div>
 
+  <!-- Backdrop shade -->
+  <div id="shade"></div>
+
   <!-- Drawer -->
   <aside id="drawer" aria-hidden="true">
-    <div id="dragbar"><div class="bar"></div></div>
-    <div id="drawerContent">
+    <div id="head">
+      <div style="width:36px"></div>
+      <div id="dragbar"><div class="bar"></div></div>
+      <button id="closeBtn" title="Close">✕</button>
+    </div>
+    <div id="tabs">
+      <button class="tab active" data-page="pageWorld">Play & World</button>
+      <button class="tab" data-page="pageParams">Parameters</button>
+      <button class="tab" data-page="pageInspect">Inspect & Log</button>
+    </div>
+
+    <!-- Pages -->
+    <div id="pageWorld" class="page show">
       <div class="btnRow">
         <button class="btn" id="btnSave">Save</button>
         <button class="btn" id="btnLoad">Load</button>
@@ -92,28 +131,28 @@
         <button class="btn" id="btnStep">Step</button>
         <button class="btn" id="btnHelp">Help</button>
       </div>
-
-      <div class="section panel" id="paramsPanel">
-        <div class="row"><div class="label">Mutation</div><div class="val" id="v_mut">0.08</div><input id="pmut" type="range" min="0" max="1" step="0.005" value="0.08"></div>
-        <div class="row"><div class="label">Food rate</div><div class="val" id="v_food">1.10</div><input id="pfood" type="range" min="0" max="3" step="0.01" value="1.10"></div>
-        <div class="row"><div class="label">Predation</div><div class="val" id="v_pred">0.45</div><input id="ppred" type="range" min="0" max="1" step="0.01" value="0.45"></div>
-        <div class="row"><div class="label">Migration</div><div class="val" id="v_mig">0.25</div><input id="pmig" type="range" min="0" max="1" step="0.01" value="0.25"></div>
-        <div class="row"><div class="label">Cap/pop</div><div class="val" id="v_cap">220</div><input id="pcap" type="range" min="40" max="500" step="10" value="220"></div>
-        <div class="row"><div class="label">Quality</div><div class="val" id="v_qual">1.00</div><input id="pqual" type="range" min="0.5" max="1.5" step="0.05" value="1.00"></div>
-      </div>
-
       <div class="section">
         <div id="miniWrap">
           <canvas id="miniNet" class="mini" title="Tap a node to switch universes"></canvas>
           <canvas id="miniUni" class="mini" title="Local portals & density"></canvas>
         </div>
       </div>
+    </div>
 
-      <div class="section panel">
-        <div id="inspect">Tap a creature to see genome, species, lineage & stats.</div>
+    <div id="pageParams" class="page">
+      <div class="panel">
+        <div class="row"><div class="label">Mutation</div><div class="val" id="v_mut">0.08</div><input id="pmut" type="range" min="0" max="1" step="0.005" value="0.08"></div>
+        <div class="row"><div class="label">Food rate</div><div class="val" id="v_food">1.10</div><input id="pfood" type="range" min="0" max="3" step="0.01" value="1.10"></div>
+        <div class="row"><div class="label">Predation</div><div class="val" id="v_pred">0.45</div><input id="ppred" type="range" min="0" max="1" step="0.01" value="0.45"></div>
+        <div class="row"><div class="label">Migration</div><div class="val" id="v_mig">0.25</div><input id="pmig" type="range" min="0" max="1" step="0.01" value="0.25"></div>
+        <div class="row"><div class="label">Cap/pop</div><div class="val" id="v_cap">260</div><input id="pcap" type="range" min="40" max="600" step="10" value="260"></div>
+        <div class="row"><div class="label">Quality</div><div class="val" id="v_qual">1.10</div><input id="pqual" type="range" min="0.5" max="1.6" step="0.05" value="1.10"></div>
       </div>
+    </div>
 
-      <div class="section panel">
+    <div id="pageInspect" class="page">
+      <div class="panel" id="inspect">Tap a creature to see genome, species, lineage & stats.</div>
+      <div class="panel" style="margin-top:10px">
         <div style="font-weight:600;margin-bottom:6px">Chronicle</div>
         <div id="log"></div>
       </div>
@@ -122,9 +161,10 @@
 
 <script>
 /* ============================================================
-   ∞ Multiverse Evolver — FULLSCREEN + BIG MOBILE CONTROLS
-   - Same sim core as the working build you confirmed.
-   - UI refactor: fullscreen canvas + floating buttons + drawer.
+   ∞ Multiverse Evolver — Fullscreen + Glass UI + Closeable Drawer
+   - Drawer close: ✕ button, tap backdrop, or swipe down (snaps).
+   - Higher contrast world colors and neon portals.
+   - Tabs inside the drawer. Big, thumb-friendly sliders.
    ============================================================ */
 (function(){
 'use strict';
@@ -135,51 +175,100 @@ const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d', {alpha:true});
 function cssSize(el){ const r=el.getBoundingClientRect(); return [Math.max(1,r.width), Math.max(1,r.height)]; }
 function resizeCanvas(){
-  const [w,h]=cssSize(canvas);
-  const W=Math.floor(w*DPR), H=Math.floor(h*DPR);
+  const [w,h]=cssSize(canvas), W=Math.floor(w*DPR), H=Math.floor(h*DPR);
   if(canvas.width!==W || canvas.height!==H){ canvas.width=W; canvas.height=H; }
 }
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas, {passive:true});
-try{ new ResizeObserver(resizeCanvas).observe(canvas); }catch(_){}
+resizeCanvas(); try{ new ResizeObserver(resizeCanvas).observe(canvas); }catch(_){}
+addEventListener('resize', resizeCanvas, {passive:true});
 
-/* ---------- UI elements ---------- */
+/* ---------- UI refs ---------- */
+const q = s => document.querySelector(s);
 const $tick=q('#statTick'), $pop=q('#statPop'), $uni=q('#statUni');
-const $log=q('#log'), $inspect=q('#inspect');
-const $drawer=q('#drawer'), $toast=q('#toast');
 const $fabPlay=q('#fabPlay'), $fabGear=q('#fabGear'), $fabMap=q('#fabMap'), $fabNew=q('#fabNew'), $fabCenter=q('#fabCenter');
-const $pmut=q('#pmut'),$pfood=q('#pfood'),$ppred=q('#ppred'),$pmig=q('#pmig'),$pcap=q('#pcap'),$pqual=q('#pqual');
-const $v_mut=q('#v_mut'),$v_food=q('#v_food'),$v_pred=q('#v_pred'),$v_mig=q('#v_mig'),$v_cap=q('#v_cap'),$v_qual=q('#v_qual');
-const miniNet=q('#miniNet'), miniUni=q('#miniUni');
-const mNet=miniNet.getContext('2d'), mUni=miniUni.getContext('2d');
-function q(s){ return document.querySelector(s); }
-function logLine(s){ $log.textContent=(s+"\n"+$log.textContent).slice(0,4000); }
+const $toast=q('#toast'), $drawer=q('#drawer'), $shade=q('#shade'), $close=q('#closeBtn');
+const $tabs=[...document.querySelectorAll('.tab')];
+const pages={ pageWorld:q('#pageWorld'), pageParams:q('#pageParams'), pageInspect:q('#pageInspect') };
+const miniNet=q('#miniNet'), miniUni=q('#miniUni'); const mNet=miniNet.getContext('2d'), mUni=miniUni.getContext('2d');
+const $log=q('#log'), $inspect=q('#inspect');
+const sliders = {
+  pmut:q('#pmut'), pfood:q('#pfood'), ppred:q('#ppred'), pmig:q('#pmig'), pcap:q('#pcap'), pqual:q('#pqual'),
+  v_mut:q('#v_mut'), v_food:q('#v_food'), v_pred:q('#v_pred'), v_mig:q('#v_mig'), v_cap:q('#v_cap'), v_qual:q('#v_qual')
+};
+function logLine(s){ $log.textContent=(s+"\n"+$log.textContent).slice(0,6000); }
 
-/* ---------- Drawer logic ---------- */
-let drawerOpen=false;
+/* ---------- Drawer: open/close & swipe ---------- */
+let drawerOpen=false, dragStartY=0, dragStartBottom=0, draggingDrawer=false;
 function setDrawer(open){
   drawerOpen=open;
   $drawer.classList.toggle('open', open);
   $drawer.setAttribute('aria-hidden', String(!open));
+  $shade.classList.toggle('show', open);
 }
 $fabGear.onclick=()=>setDrawer(!drawerOpen);
-q('#btnHelp').onclick=()=>alert("Controls:\n• Double-tap to play/pause\n• Drag to pan • Pinch/scroll to zoom\n• Tap a creature to inspect\n• Use ⚙︎ for settings, 🗺 for mini-maps, ⊕ for new universe, ⊙ for center");
-q('#btnSave').onclick=()=>saveState();
-q('#btnLoad').onclick=()=>loadState();
-q('#btnWipe').onclick=()=>{ localStorage.removeItem('multiverseSave'); logLine("Local save cleared."); };
+$fabMap.onclick=()=>{ setDrawer(true); activateTab('pageWorld'); requestAnimationFrame(drawMini); };
+$close.onclick=()=>setDrawer(false);
+$shade.onclick=()=>setDrawer(false);
+
+// Swipe down on the drag bar to close
+const dragbar = q('#dragbar');
+dragbar.addEventListener('touchstart', e=>{
+  if(e.touches.length!==1) return;
+  draggingDrawer=true;
+  dragStartY=e.touches[0].clientY;
+  const rect=$drawer.getBoundingClientRect(); // distance from bottom to window bottom
+  dragStartBottom = window.innerHeight - rect.top - rect.height; // should be 0 when open
+},{passive:true});
+dragbar.addEventListener('touchmove', e=>{
+  if(!draggingDrawer) return;
+  const dy = e.touches[0].clientY - dragStartY;
+  const h = $drawer.getBoundingClientRect().height;
+  // move bottom between 0 (open) and -h (closed)
+  const bottom = Math.max(-h, Math.min(0, -dy));
+  $drawer.style.transition='none';
+  $drawer.style.bottom = bottom + 'px';
+  $shade.style.opacity = String(1 - Math.min(1, Math.abs(bottom)/h));
+},{passive:true});
+dragbar.addEventListener('touchend', ()=>{
+  if(!draggingDrawer) return; draggingDrawer=false;
+  const h = $drawer.getBoundingClientRect().height;
+  const bottom = parseFloat($drawer.style.bottom || '0');
+  $drawer.style.transition='';
+  // snap based on how far dragged
+  if(Math.abs(bottom) > h*0.28){ // close
+    $drawer.style.bottom=''; setDrawer(false);
+  }else{ // reopen
+    $drawer.style.bottom=''; setDrawer(true);
+  }
+});
+
+/* ---------- Tabs ---------- */
+function activateTab(pageId){
+  $tabs.forEach(t=>t.classList.toggle('active', t.dataset.page===pageId));
+  Object.entries(pages).forEach(([id,el])=> el.classList.toggle('show', id===pageId));
+}
+$tabs.forEach(t=>t.addEventListener('click', ()=>activateTab(t.dataset.page)));
 
 /* ---------- Toast hint ---------- */
 setTimeout(()=>{ $toast.classList.add('show'); setTimeout(()=> $toast.classList.remove('show'), 3000); }, 700);
 
 /* ---------- Transform & input ---------- */
 let view={x:0,y:0,z:1};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const TAU=Math.PI*2;
 function worldToScreen(x,y){ return [ (x-view.x)*view.z*DPR + canvas.width*0.5, (y-view.y)*view.z*DPR + canvas.height*0.5 ]; }
 function screenToWorld(x,y){ return [ (x-canvas.width*0.5)/(view.z*DPR) + view.x, (y-canvas.height*0.5)/(view.z*DPR) + view.y ]; }
 let dragging=false,lastX=0,lastY=0, pinch=false,pinchDist=0,pinchStartZ=1,lastTap=0;
 canvas.addEventListener('mousedown',e=>{ dragging=true; [lastX,lastY]=[e.clientX,e.clientY]; });
-window.addEventListener('mouseup',()=>dragging=false);
-window.addEventListener('mousemove',e=>{ if(!dragging) return; const dx=e.clientX-lastX,dy=e.clientY-lastY; view.x-=dx/(view.z*DPR); view.y-=dy/(view.z*DPR); [lastX,lastY]=[e.clientX,e.clientY]; });
-canvas.addEventListener('wheel',e=>{ e.preventDefault(); const factor=(Math.sign(e.deltaY)>0)?1/1.1:1.1; const [wx,wy]=screenToWorld(e.clientX*DPR,e.clientY*DPR); view.z=clamp(view.z*factor,0.25,5); const [wx2,wy2]=screenToWorld(e.clientX*DPR,e.clientY*DPR); view.x+=(wx-wx2); view.y+=(wy-wy2); },{passive:false});
+addEventListener('mouseup',()=>dragging=false);
+addEventListener('mousemove',e=>{ if(!dragging) return; const dx=e.clientX-lastX,dy=e.clientY-lastY; view.x-=dx/(view.z*DPR); view.y-=dy/(view.z*DPR); [lastX,lastY]=[e.clientX,e.clientY]; });
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const factor=(Math.sign(e.deltaY)>0)?1/1.1:1.1;
+  const [wx,wy]=screenToWorld(e.clientX*DPR,e.clientY*DPR);
+  view.z=clamp(view.z*factor,0.25,5);
+  const [wx2,wy2]=screenToWorld(e.clientX*DPR,e.clientY*DPR);
+  view.x+=(wx-wx2); view.y+=(wy-wy2);
+},{passive:false});
 canvas.addEventListener('touchstart',e=>{
   if(e.touches.length===1){
     const t=e.touches[0]; dragging=true; [lastX,lastY]=[t.clientX,t.clientY];
@@ -198,19 +287,10 @@ canvas.addEventListener('touchmove',e=>{
     const t=e.touches[0], dx=t.clientX-lastX, dy=t.clientY-lastY; view.x-=dx/(view.z*DPR); view.y-=dy/(view.z*DPR); [lastX,lastY]=[t.clientX,t.clientY];
   }
 },{passive:true});
-window.addEventListener('touchend',()=>{ pinch=false; dragging=false; });
-window.addEventListener('keydown',e=>{
-  if(e.key===' '){ e.preventDefault(); togglePlay(); }
-  if(e.key==='d'||e.key==='D'){ stepOnce(); }
-  if(e.key==='+'){ view.z=clamp(view.z*1.1,0.25,5); }
-  if(e.key==='-'){ view.z=clamp(view.z/1.1,0.25,5); }
-  if(e.key==='ArrowUp'){ view.y-=40/(view.z); }
-  if(e.key==='ArrowDown'){ view.y+=40/(view.z); }
-  if(e.key==='ArrowLeft'){ view.x-=40/(view.z); }
-  if(e.key==='ArrowRight'){ view.x+=40/(view.z); }
-});
+addEventListener('touchend',()=>{ pinch=false; dragging=false; });
 
-/* ---------- Sliders (big & live) ---------- */
+/* ---------- Params & sliders ---------- */
+const params={ mutation:+sliders.pmut.value, foodRate:+sliders.pfood.value, predation:+sliders.ppred.value, migration:+sliders.pmig.value, cap:+sliders.pcap.value|0, quality:+sliders.pqual.value };
 function bindSlider(inp, span, prop, fmt=(v)=>v.toFixed(2)){
   inp.addEventListener('input', ()=>{
     params[prop]=+inp.value;
@@ -218,12 +298,20 @@ function bindSlider(inp, span, prop, fmt=(v)=>v.toFixed(2)){
     if(prop==='quality'){ for(const u of multiverse.universes.values()) for(const sp of u.species.values()) sp.cachedSprite=null; }
   });
 }
-const params={ mutation:+$pmut.value, foodRate:+$pfood.value, predation:+$ppred.value, migration:+$pmig.value, cap:+$pcap.value|0, quality:+$pqual.value };
-bindSlider($pmut,$v_mut,'mutation'); bindSlider($pfood,$v_food,'foodRate'); bindSlider($ppred,$v_pred,'predation');
-bindSlider($pmig,$v_mig,'migration'); bindSlider($pcap,$v_cap,'cap',v=>String(v)); bindSlider($pqual,$v_qual,'quality');
+bindSlider(sliders.pmut,sliders.v_mut,'mutation');
+bindSlider(sliders.pfood,sliders.v_food,'foodRate');
+bindSlider(sliders.ppred,sliders.v_pred,'predation');
+bindSlider(sliders.pmig,sliders.v_mig,'migration');
+bindSlider(sliders.pcap,sliders.v_cap,'cap',v=>String(v));
+bindSlider(sliders.pqual,sliders.v_qual,'quality',v=>v.toFixed(2));
+
+/* ---------- Buttons in menu ---------- */
+q('#btnHelp').onclick=()=>alert("Controls:\n• Double-tap to play/pause\n• Drag to pan • Pinch/scroll to zoom\n• Tap a creature to inspect\n• Use tabs for World / Parameters / Inspect");
+q('#btnSave').onclick=()=>saveState();
+q('#btnLoad').onclick=()=>loadState();
+q('#btnWipe').onclick=()=>{ localStorage.removeItem('multiverseSave'); logLine("Local save cleared."); };
 
 /* ---------- PRNG & helpers ---------- */
-const TAU=Math.PI*2; const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function mulberry32(seed){ return function(){ let t=seed+=0x6D2B79F5; t=Math.imul(t^t>>>15,t|1); t^=t+Math.imul(t^t>>>7,61); return ((t^t>>>14)>>>0)/4294967296; } }
 function rndRange(r,a,b){ return a+(b-a)*r(); } function randInt(r,a,b){ return (rndRange(r,a,b+1))|0; } function pick(r,arr){ return arr[(arr.length*r())|0]; }
 
@@ -234,8 +322,8 @@ function speciesName(r){ return pick(r,NAME_A)+pick(r,NAME_B); }
 
 /* ---------- Genetics ---------- */
 function randomGenome(r){
-  const morph=randInt(r,0,4), hue=randInt(r,0,360), sat=rndRange(r,0.5,1), lum=rndRange(r,0.45,0.75);
-  const size=rndRange(r,8,18), speed=rndRange(r,16,48), sense=rndRange(r,60,140);
+  const morph=randInt(r,0,4), hue=randInt(r,0,360), sat=rndRange(r,0.65,1), lum=rndRange(r,0.5,0.8); // more vivid
+  const size=rndRange(r,8,18), speed=rndRange(r,18,52), sense=rndRange(r,70,150);
   const dietR=r(); const diet=dietR<0.55?0:(dietR<0.8?2:1);
   const specVar=new Array(6).fill(0).map(()=>rndRange(r,0,1));
   return {morph,hue,sat,lum,size,speed,sense,diet,specVar};
@@ -243,14 +331,14 @@ function randomGenome(r){
 function mutateGenome(p,r,rate){
   const g=JSON.parse(JSON.stringify(p)); function j(v,a){return v+(r()*2-1)*a*rate;}
   if(r()<rate*0.6) g.morph=(g.morph+(r()<0.5?-1:1)+5)%5;
-  g.hue=(g.hue+randInt(r,-20,20)+360)%360; g.sat=clamp(j(g.sat,0.25),0.2,1); g.lum=clamp(j(g.lum,0.2),0.25,0.85);
-  g.size=clamp(j(g.size,6),6,28); g.speed=clamp(j(g.speed,18),8,70); g.sense=clamp(j(g.sense,50),30,220);
+  g.hue=(g.hue+randInt(r,-22,22)+360)%360; g.sat=clamp(j(g.sat,0.28),0.3,1); g.lum=clamp(j(g.lum,0.22),0.35,0.88);
+  g.size=clamp(j(g.size,6),6,28); g.speed=clamp(j(g.speed,18),8,70); g.sense=clamp(j(g.sense,55),30,220);
   if(r()<rate*0.5) g.diet=randInt(r,0,2);
   for(let i=0;i<g.specVar.length;i++) g.specVar[i]=clamp(j(g.specVar[i],0.7),0,1);
   return g;
 }
 
-/* ---------- Species & creature factories ---------- */
+/* ---------- Species & creatures ---------- */
 let nextSpeciesId=1, simTick=0;
 function makeSpecies(r,parentId=null,parentGenome=null){
   const genome=parentGenome?mutateGenome(parentGenome,r,params.mutation*0.8):randomGenome(r);
@@ -261,7 +349,7 @@ function makeCreature(u,sp,x,y){
   const ang=u.rng()*TAU;
   return {x,y,vx:Math.cos(ang)*0.1,vy:Math.sin(ang)*0.1,ang,energy:60+u.rng()*40,age:0,speciesId:sp.id,cooldown:0,blink:0,id:(u.id+"-"+Math.random()).slice(0,18)};
 }
-function makeFood(u){ return {x:rndRange(u.rng,0,u.size), y:rndRange(u.rng,0,u.size), v:rndRange(u.rng,4,10)}; }
+function makeFood(u){ return {x:rndRange(u.rng,0,u.size), y:rndRange(u.rng,0,u.size), v:rndRange(u.rng,6,12)}; } // brighter & bigger reward
 
 /* ---------- Universe ---------- */
 class Universe{
@@ -271,13 +359,13 @@ class Universe{
     this.gridSize=60; this.grid=new Map(); this.chronicle=[];
     this.spawnInitial(); this.createBlackHoles();
   }
-  log(s){ this.chronicle.unshift({t:simTick,s}); if(this===multiverse.currentUniverse()) logLine("U"+this.id+": "+s); if(this.chronicle.length>80) this.chronicle.pop(); }
+  log(s){ this.chronicle.unshift({t:simTick,s}); if(this===multiverse.currentUniverse()) logLine("U"+this.id+": "+s); if(this.chronicle.length>100) this.chronicle.pop(); }
   spawnInitial(){
     for(let s=0;s<3;s++){
       const sp=makeSpecies(this.rng); this.species.set(sp.id,sp);
-      for(let i=0;i<24;i++){ const x=rndRange(this.rng,200,this.size-200), y=rndRange(this.rng,200,this.size-200); this.creatures.push(makeCreature(this,sp,x,y)); sp.totalBorn++; }
+      for(let i=0;i<26;i++){ const x=rndRange(this.rng,200,this.size-200), y=rndRange(this.rng,200,this.size-200); this.creatures.push(makeCreature(this,sp,x,y)); sp.totalBorn++; }
     }
-    for(let i=0;i<220;i++) this.food.push(makeFood(this));
+    for(let i=0;i<260;i++) this.food.push(makeFood(this));
     this.log(`Universe ${this.id} awakens with ${this.creatures.length} lifeforms.`);
   }
   createBlackHoles(){
@@ -285,7 +373,7 @@ class Universe{
     for(let i=0;i<n;i++){
       const pos=[rndRange(this.rng,120,this.size-120), this.rng()<0.5?rndRange(this.rng,40,100):rndRange(this.rng,this.size-100,this.size-40)];
       if(this.rng()<0.5) pos.reverse();
-      this.holes.push({x:pos[0],y:pos[1],r:40,angle:this.rng()*TAU,link:null});
+      this.holes.push({x:pos[0],y:pos[1],r:46,angle:this.rng()*TAU,link:null}); // bigger & brighter
     }
   }
   clearGrid(){ this.grid.clear(); }
@@ -297,9 +385,9 @@ class Universe{
     return out;
   }
   step(dt){
-    const want=Math.max(60, params.cap*0.8);
+    const want=Math.max(80, params.cap*0.85);
     const deficit=Math.max(0, want-(this.food.length*2));
-    for(let i=0;i<((params.foodRate*deficit*0.02)|0);i++) this.food.push(makeFood(this));
+    for(let i=0;i<((params.foodRate*deficit*0.025)|0);i++) this.food.push(makeFood(this));
 
     this.clearGrid(); for(const c of this.creatures) this.addToGrid(c);
     const removal=[];
@@ -319,26 +407,26 @@ class Universe{
       }
 
       // Motion
-      let ax=0,ay=0; const r1=this.rng(); c.ang+=(r1-0.5)*0.2; ax+=Math.cos(c.ang)*0.5; ay+=Math.sin(c.ang)*0.5;
-      if(tx!=null){ const dx=tx-c.x,dy=ty-c.y,d=Math.hypot(dx,dy)+1e-6; ax+=dx/d*1.2; ay+=dy/d*1.2; }
-      const m=100; if(c.x<m) ax+=0.6; if(c.y<m) ay+=0.6; if(c.x>this.size-m) ax-=0.6; if(c.y>this.size-m) ay-=0.6;
-      c.vx=clamp(c.vx+ax*dt,-2,2); c.vy=clamp(c.vy+ay*dt,-2,2);
-      const spd=g.speed*0.02, vlen=Math.hypot(c.vx,c.vy); if(vlen>0){ c.vx=c.vx/vlen*spd; c.vy=c.vy/vlen*spd; }
+      let ax=0,ay=0; const r1=this.rng(); c.ang+=(r1-0.5)*0.2; ax+=Math.cos(c.ang)*0.55; ay+=Math.sin(c.ang)*0.55;
+      if(tx!=null){ const dx=tx-c.x,dy=ty-c.y,d=Math.hypot(dx,dy)+1e-6; ax+=dx/d*1.25; ay+=dy/d*1.25; }
+      const m=110; if(c.x<m) ax+=0.65; if(c.y<m) ay+=0.65; if(c.x>this.size-m) ax-=0.65; if(c.y>this.size-m) ay-=0.65;
+      c.vx=clamp(c.vx+ax*dt,-2.2,2.2); c.vy=clamp(c.vy+ay*dt,-2.2,2.2);
+      const spd=g.speed*0.021, vlen=Math.hypot(c.vx,c.vy); if(vlen>0){ c.vx=c.vx/vlen*spd; c.vy=c.vy/vlen*spd; }
       c.x+=c.vx; c.y+=c.vy;
 
       // Eat
       if(targetType==='food'){
-        if(Math.hypot(target.x-c.x,target.y-c.y)<g.size*0.8){
-          c.energy+=target.v; this.food.splice(this.food.indexOf(target),1); c.blink=0.2;
+        if(Math.hypot(target.x-c.x,target.y-c.y)<g.size*0.85){
+          c.energy+=target.v; this.food.splice(this.food.indexOf(target),1); c.blink=0.25;
         }
       }else if(targetType==='prey' && Math.random()<params.predation){
-        if(Math.hypot(target.x-c.x,target.y-c.y)<(g.size*0.6)){
-          const idx=this.creatures.indexOf(target); if(idx>=0){ this.creatures.splice(idx,1); const tsp=this.species.get(target.speciesId); if(tsp) tsp.totalDeaths++; c.energy+=40; c.blink=0.25; }
+        if(Math.hypot(target.x-c.x,target.y-c.y)<(g.size*0.62)){
+          const idx=this.creatures.indexOf(target); if(idx>=0){ this.creatures.splice(idx,1); const tsp=this.species.get(target.speciesId); if(tsp) tsp.totalDeaths++; c.energy+=42; c.blink=0.28; }
         }
       }
 
       // Reproduce
-      if(c.energy>120 && c.cooldown<=0 && this.creatures.length<params.cap){
+      if(c.energy>122 && c.cooldown<=0 && this.creatures.length<params.cap){
         c.energy*=0.5; c.cooldown=2.2;
         let childSpecies=sp;
         if(Math.random()<params.mutation*0.25){
@@ -352,7 +440,7 @@ class Universe{
       // Death & migration
       if(c.energy<=0 || c.age>1800) removal.push(c);
       if(Math.random()<params.migration*0.02){
-        for(const h of this.holes){ if(Math.hypot(c.x-h.x,c.y-h.y)<h.r*0.9 && h.link){ multiverse.migrate(c,this,h); break; } }
+        for(const h of this.holes){ if(Math.hypot(c.x-h.x,c.y-h.y)<h.r*0.92 && h.link){ multiverse.migrate(c,this,h); break; } }
       }
     }
     for(const c of removal){ const sp=this.species.get(c.speciesId); if(sp) sp.totalDeaths++; const i=this.creatures.indexOf(c); if(i>=0) this.creatures.splice(i,1); }
@@ -364,7 +452,7 @@ class Universe{
     for(const sp of this.species.values()){ let best=0; for(const c of this.creatures){ if(c.speciesId===sp.id && c.age>best) best=c.age; } sp.bestAge=Math.max(sp.bestAge,best); }
     if(this.creatures.length===0){
       const sp=makeSpecies(this.rng); this.species.set(sp.id,sp);
-      for(let i=0;i<12;i++){ const x=rndRange(this.rng,200,this.size-200), y=rndRange(this.rng,200,this.size-200); this.creatures.push(makeCreature(this,sp,x,y)); }
+      for(let i=0;i<14;i++){ const x=rndRange(this.rng,220,this.size-220), y=rndRange(this.rng,220,this.size-220); this.creatures.push(makeCreature(this,sp,x,y)); }
       this.log("Biosphere rebooted.");
     }
   }
@@ -396,55 +484,69 @@ const multiverse={
     }
     const idx=fromU.creatures.indexOf(creature); if(idx>=0) fromU.creatures.splice(idx,1);
     const toHole=link.hole; creature.x=toHole.x+(Math.random()*6-3); creature.y=toHole.y+(Math.random()*6-3);
-    creature.vx*=0.5; creature.vy*=0.5; creature.blink=0.3; toU.creatures.push(creature);
+    creature.vx*=0.5; creature.vy*=0.5; creature.blink=0.35; toU.creatures.push(creature);
     const sp=toU.species.get(creature.speciesId); if(sp) sp.expansions++; toU.log(`Migration: one ${sp?sp.name:"organism"} arrived.`);
   }
 };
 multiverse.ensureUniverse(1); multiverse.ensureUniverse(2); multiverse.connect(1,2);
 
-/* ---------- Species sprites (complex silhouettes) ---------- */
+/* ---------- Species sprites (complex silhouettes, brighter) ---------- */
 function getSpeciesSprite(u,sp){
   if(!sp) return null; if(sp.cachedSprite && sp.spriteScale===params.quality) return sp.cachedSprite;
-  const g=sp.genome, scale=g.size*params.quality, sz=Math.max(32, Math.min(196, (scale*7)|0));
+  const g=sp.genome, scale=g.size*params.quality, sz=Math.max(36, Math.min(200, (scale*7.5)|0));
   const oc=document.createElement('canvas'); oc.width=oc.height=sz; const cx=oc.getContext('2d');
   cx.translate(sz/2, sz/2); cx.scale(scale/18, scale/18);
-  const fill=`hsl(${g.hue}deg ${Math.round(60+g.sat*35)}% ${Math.round(45+g.lum*30)}%)`, stroke=`hsl(${(g.hue+30)%360}deg 50% 30%)`;
-  cx.shadowColor=`hsl(${g.hue}deg 100% 50% / 0.25)`; cx.shadowBlur=6;
+  const fill=`hsl(${g.hue}deg ${Math.round(72+g.sat*28)}% ${Math.round(48+g.lum*30)}%)`;
+  const stroke=`hsl(${(g.hue+24)%360}deg 60% 20%)`;
+  cx.shadowColor=`hsl(${g.hue}deg 100% 60% / 0.35)`; cx.shadowBlur=8;
   switch(g.morph){ case 0: drawRadiate(cx,g,fill,stroke); break; case 1: drawBilateral(cx,g,fill,stroke); break; case 2: drawOrbital(cx,g,fill,stroke); break; case 3: drawSpiralShell(cx,g,fill,stroke); break; case 4: drawLeafFrond(cx,g,fill,stroke); break; }
-  cx.save(); cx.rotate((g.specVar[4]-0.5)*0.8); cx.fillStyle='white'; cx.beginPath(); cx.ellipse(4,-2,2.5,1.6,0,0,TAU); cx.fill(); cx.fillStyle='black'; cx.beginPath(); cx.ellipse(4,-2,1,0.7,0,0,TAU); cx.fill(); cx.restore();
+  // eye
+  cx.save(); cx.rotate((g.specVar[4]-0.5)*0.8); cx.fillStyle='white'; cx.beginPath(); cx.ellipse(4,-2,2.6,1.7,0,0,TAU); cx.fill();
+  cx.fillStyle='black'; cx.beginPath(); cx.ellipse(4,-2,1.1,0.75,0,0,TAU); cx.fill(); cx.restore();
   sp.cachedSprite=oc; sp.spriteScale=params.quality; return oc;
 }
 function superPath(cx,m,n1,n2,n3,steps,scale=12,jitter=0){ cx.beginPath(); for(let i=0;i<=steps;i++){ const phi=TAU*i/steps,a=1,b=1; const t1=Math.pow(Math.abs(Math.cos(m*phi/4)/a),n2); const t2=Math.pow(Math.abs(Math.sin(m*phi/4)/b),n3); let r=Math.pow(t1+t2,-1/n1); if(!isFinite(r)) r=0; if(jitter) r*=1+(Math.sin(phi*5+(steps%13))*jitter); const x=r*Math.cos(phi)*scale,y=r*Math.sin(phi)*scale; i?cx.lineTo(x,y):cx.moveTo(x,y);} cx.closePath(); }
-function drawRadiate(cx,g,fill,stroke){ const m=5+(g.specVar[0]*5|0); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=1.8; superPath(cx,m,0.6+g.specVar[1]*1.4,5,12,240,16,0.04*g.specVar[2]); cx.fill(); cx.stroke(); cx.save(); cx.globalAlpha=0.25; cx.fillStyle=`hsl(${(g.hue+310)%360}deg 80% 70%)`; superPath(cx,m+1,0.8,8,4,200,10,0); cx.fill(); cx.restore(); cx.strokeStyle=`hsl(${g.hue}deg 70% 60% / 0.6)`; cx.lineWidth=1.2; const arms=6+(g.specVar[3]*6|0); for(let i=0;i<arms;i++){ const a=TAU*i/arms+g.specVar[4]*0.7; cx.beginPath(); cx.moveTo(Math.cos(a)*6,Math.sin(a)*6); const len=10+g.specVar[5]*16; for(let k=1;k<=4;k++){ const t=k/4; const x=Math.cos(a)*(6+t*len)+Math.sin(a*3+t*2)*1.5; const y=Math.sin(a)*(6+t*len)+Math.cos(a*4+t*3)*1.5; cx.lineTo(x,y);} cx.stroke(); } }
-function drawBilateral(cx,g,fill,stroke){ cx.save(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2; cx.beginPath(); cx.moveTo(10,0); cx.bezierCurveTo(6,-8,-4,-10,-10,0); cx.bezierCurveTo(-4,10,6,8,10,0); cx.closePath(); cx.fill(); cx.stroke(); const legs=3+(g.specVar[0]*5|0); cx.strokeStyle=`hsl(${(g.hue+40)%360}deg 50% 55%)`; cx.lineWidth=1.2; for(let i=0;i<legs;i++){ const y=-6+i*(12/(legs-1)); cx.beginPath(); cx.moveTo(-4,y); cx.quadraticCurveTo(-12,y-2,-14,y+(i%2?3:-3)); cx.moveTo(4,y); cx.quadraticCurveTo(12,y+2,14,y+(i%2?-3:3)); cx.stroke(); } cx.beginPath(); cx.moveTo(6,-3); cx.quadraticCurveTo(12,-10,14,-12); cx.moveTo(6,3); cx.quadraticCurveTo(12,10,14,12); cx.stroke(); cx.globalAlpha=0.3; cx.fillStyle='white'; for(let i=0;i<5;i++){ cx.fillRect(-2+i*2-5,-8,1,16);} cx.restore(); }
-function drawOrbital(cx,g,fill,stroke){ cx.save(); const ring=10+g.specVar[0]*8; cx.strokeStyle=`hsl(${g.hue}deg 70% 60% / 0.8)`; cx.lineWidth=1.4; cx.beginPath(); cx.ellipse(0,0,ring,ring*0.6,g.specVar[1]*0.9,0,TAU); cx.stroke(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.beginPath(); cx.arc(0,0,7+g.specVar[2]*4,0,TAU); cx.fill(); cx.stroke(); const pods=3+(g.specVar[3]*5|0); cx.fillStyle=`hsl(${(g.hue+260)%360}deg 70% 70%)`; for(let i=0;i<pods;i++){ const a=TAU*i/pods+g.specVar[4]*1.2; cx.beginPath(); cx.arc(Math.cos(a)*ring,Math.sin(a)*ring*0.6,2+g.specVar[5]*2,0,TAU); cx.fill(); } cx.restore(); }
-function drawSpiralShell(cx,g,fill,stroke){ cx.save(); const turns=2.2+g.specVar[0]*2; cx.strokeStyle=stroke; cx.lineWidth=1.6; cx.beginPath(); for(let t=0;t<1;t+=1/140){ const a=t*TAU*turns, r=3+12*t, x=r*Math.cos(a), y=r*Math.sin(a); t?cx.lineTo(x,y):cx.moveTo(x,y);} cx.stroke(); cx.strokeStyle=`hsl(${(g.hue+20)%360}deg 40% 55% / 0.7)`; cx.lineWidth=1; for(let i=0;i<11;i++){ const t=i/10,a=t*TAU*turns,r=3+12*t,x=r*Math.cos(a),y=r*Math.sin(a),nx=Math.cos(a+Math.PI/2),ny=Math.sin(a+Math.PI/2); cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x+nx*3,y+ny*3); cx.stroke(); } cx.globalAlpha=0.35; cx.fillStyle=fill; cx.beginPath(); cx.arc(0,0,12,0,TAU); cx.fill(); cx.restore(); }
-function drawLeafFrond(cx,g,fill,stroke){ cx.save(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=1.4; cx.beginPath(); cx.moveTo(-12,0); cx.quadraticCurveTo(0,-10,12,0); cx.quadraticCurveTo(0,10,-12,0); cx.closePath(); cx.fill(); cx.stroke(); cx.strokeStyle=`hsl(${(g.hue+90)%360}deg 40% 60%)`; cx.beginPath(); cx.moveTo(-10,0); cx.lineTo(10,0); cx.stroke(); cx.globalAlpha=0.8; cx.lineWidth=1; for(let i=0;i<6;i++){ const t=-8+i*3.2; cx.beginPath(); cx.moveTo(t,0); cx.quadraticCurveTo(t+2,-4,t+4,-6); cx.stroke(); cx.beginPath(); cx.moveTo(t,0); cx.quadraticCurveTo(t+2,4,t+4,6); cx.stroke(); } cx.restore(); }
+function drawRadiate(cx,g,fill,stroke){ const m=5+(g.specVar[0]*5|0); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2.0; superPath(cx,m,0.6+g.specVar[1]*1.4,5,12,240,16,0.05*g.specVar[2]); cx.fill(); cx.stroke(); cx.save(); cx.globalAlpha=0.28; cx.fillStyle=`hsl(${(g.hue+310)%360}deg 85% 70%)`; superPath(cx,m+1,0.8,8,4,200,10,0); cx.fill(); cx.restore(); cx.strokeStyle=`hsl(${g.hue}deg 85% 60% / 0.7)`; cx.lineWidth=1.3; const arms=6+(g.specVar[3]*6|0); for(let i=0;i<arms;i++){ const a=TAU*i/arms+g.specVar[4]*0.7; cx.beginPath(); cx.moveTo(Math.cos(a)*6,Math.sin(a)*6); const len=11+g.specVar[5]*17; for(let k=1;k<=4;k++){ const t=k/4; const x=Math.cos(a)*(6+t*len)+Math.sin(a*3+t*2)*1.6; const y=Math.sin(a)*(6+t*len)+Math.cos(a*4+t*3)*1.6; cx.lineTo(x,y);} cx.stroke(); } }
+function drawBilateral(cx,g,fill,stroke){ cx.save(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2.2; cx.beginPath(); cx.moveTo(10,0); cx.bezierCurveTo(6,-8,-4,-10,-10,0); cx.bezierCurveTo(-4,10,6,8,10,0); cx.closePath(); cx.fill(); cx.stroke(); const legs=3+(g.specVar[0]*5|0); cx.strokeStyle=`hsl(${(g.hue+40)%360}deg 60% 60%)`; cx.lineWidth=1.4; for(let i=0;i<legs;i++){ const y=-6+i*(12/(legs-1)); cx.beginPath(); cx.moveTo(-4,y); cx.quadraticCurveTo(-12,y-2,-14,y+(i%2?3:-3)); cx.moveTo(4,y); cx.quadraticCurveTo(12,y+2,14,y+(i%2?-3:3)); cx.stroke(); } cx.beginPath(); cx.moveTo(6,-3); cx.quadraticCurveTo(12,-10,14,-12); cx.moveTo(6,3); cx.quadraticCurveTo(12,10,14,12); cx.stroke(); cx.globalAlpha=0.34; cx.fillStyle='white'; for(let i=0;i<5;i++){ cx.fillRect(-2+i*2-5,-8,1,16);} cx.restore(); }
+function drawOrbital(cx,g,fill,stroke){ cx.save(); const ring=10+g.specVar[0]*8; cx.strokeStyle=`hsl(${g.hue}deg 90% 65% / 0.9)`; cx.lineWidth=1.6; cx.beginPath(); cx.ellipse(0,0,ring,ring*0.6,g.specVar[1]*0.9,0,TAU); cx.stroke(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=2.0; cx.beginPath(); cx.arc(0,0,7+g.specVar[2]*4,0,TAU); cx.fill(); cx.stroke(); const pods=3+(g.specVar[3]*5|0); cx.fillStyle=`hsl(${(g.hue+260)%360}deg 85% 72%)`; for(let i=0;i<pods;i++){ const a=TAU*i/pods+g.specVar[4]*1.2; cx.beginPath(); cx.arc(Math.cos(a)*ring,Math.sin(a)*ring*0.6,2+g.specVar[5]*2,0,TAU); cx.fill(); } cx.restore(); }
+function drawSpiralShell(cx,g,fill,stroke){ cx.save(); const turns=2.2+g.specVar[0]*2; cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.beginPath(); for(let t=0;t<1;t+=1/140){ const a=t*TAU*turns, r=3+12*t, x=r*Math.cos(a), y=r*Math.sin(a); t?cx.lineTo(x,y):cx.moveTo(x,y);} cx.stroke(); cx.strokeStyle=`hsl(${(g.hue+20)%360}deg 60% 58% / 0.8)`; cx.lineWidth=1.2; for(let i=0;i<11;i++){ const t=i/10,a=t*TAU*turns,r=3+12*t,x=r*Math.cos(a),y=r*Math.sin(a),nx=Math.cos(a+Math.PI/2),ny=Math.sin(a+Math.PI/2); cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x+nx*3,y+ny*3); cx.stroke(); } cx.globalAlpha=0.4; cx.fillStyle=fill; cx.beginPath(); cx.arc(0,0,12,0,TAU); cx.fill(); cx.restore(); }
+function drawLeafFrond(cx,g,fill,stroke){ cx.save(); cx.fillStyle=fill; cx.strokeStyle=stroke; cx.lineWidth=1.8; cx.beginPath(); cx.moveTo(-12,0); cx.quadraticCurveTo(0,-10,12,0); cx.quadraticCurveTo(0,10,-12,0); cx.closePath(); cx.fill(); cx.stroke(); cx.strokeStyle=`hsl(${(g.hue+90)%360}deg 55% 62%)`; cx.beginPath(); cx.moveTo(-10,0); cx.lineTo(10,0); cx.stroke(); cx.globalAlpha=0.9; cx.lineWidth=1.2; for(let i=0;i<6;i++){ const t=-8+i*3.2; cx.beginPath(); cx.moveTo(t,0); cx.quadraticCurveTo(t+2,-4,t+4,-6); cx.stroke(); cx.beginPath(); cx.moveTo(t,0); cx.quadraticCurveTo(t+2,4,t+4,6); cx.stroke(); } cx.restore(); }
 
-/* ---------- Rendering ---------- */
+/* ---------- Rendering (high contrast) ---------- */
 function drawUniverse(u){
-  ctx.fillStyle='rgba(8,12,18,0.95)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  // subtle vignette already in CSS background; draw domain & contents
   ctx.save(); ctx.translate(canvas.width/2,canvas.height/2); ctx.scale(view.z*DPR,view.z*DPR); ctx.translate(-view.x,-view.y);
-  ctx.strokeStyle='rgba(125,211,252,0.08)'; ctx.lineWidth=2/view.z/DPR; ctx.strokeRect(0,0,u.size,u.size);
-  ctx.fillStyle='rgba(125,255,160,0.8)'; for(const f of u.food){ ctx.beginPath(); ctx.arc(f.x,f.y,1.5+f.v*0.05,0,TAU); ctx.fill(); }
+  // Domain border brighter
+  ctx.strokeStyle='rgba(110,231,255,0.22)'; ctx.lineWidth=2.2/view.z/DPR; ctx.strokeRect(0,0,u.size,u.size);
+
+  // Food: neon lime dots
+  ctx.fillStyle='rgba(172,255,120,0.95)';
+  for(const f of u.food){ ctx.beginPath(); ctx.arc(f.x,f.y, 1.8+f.v*0.05, 0, TAU); ctx.fill(); }
+
+  // Portals: brighter neon rings
   for(const h of u.holes){
-    const grad=ctx.createRadialGradient(h.x,h.y,4,h.x,h.y,h.r);
-    grad.addColorStop(0,'rgba(167,139,250,0.9)'); grad.addColorStop(0.5,'rgba(56,189,248,0.4)'); grad.addColorStop(1,'rgba(2,6,23,0.2)');
+    const grad=ctx.createRadialGradient(h.x,h.y,6,h.x,h.y,h.r);
+    grad.addColorStop(0,'rgba(147,51,234,0.95)');
+    grad.addColorStop(0.45,'rgba(2,132,199,0.75)');
+    grad.addColorStop(1,'rgba(2,6,23,0.05)');
     ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(h.x,h.y,h.r,0,TAU); ctx.fill();
-    ctx.strokeStyle='rgba(125,211,252,0.5)'; ctx.lineWidth=1.5/view.z/DPR; ctx.beginPath();
-    for(let t=0;t<TAU;t+=TAU/64){ const r=h.r*0.7+Math.sin(t*4+simTick*0.05)*2; const x=h.x+Math.cos(t+h.angle)*r, y=h.y+Math.sin(t+h.angle)*r; t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
-    ctx.closePath(); ctx.stroke(); if(h.link){ ctx.fillStyle='rgba(250,204,21,0.8)'; ctx.fillRect(h.x-2,h.y-2,4,4); }
+    ctx.strokeStyle='rgba(56,189,248,0.9)'; ctx.lineWidth=1.8/view.z/DPR; ctx.beginPath();
+    for(let t=0;t<TAU;t+=TAU/64){ const r=h.r*0.68+Math.sin(t*4+simTick*0.06)*2.4; const x=h.x+Math.cos(t+h.angle)*r, y=h.y+Math.sin(t+h.angle)*r; t===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }
+    ctx.closePath(); ctx.stroke(); if(h.link){ ctx.fillStyle='rgba(251,191,36,0.95)'; ctx.fillRect(h.x-2,h.y-2,4,4); }
   }
+
+  // Creatures: full alpha for visibility
   for(const c of u.creatures){
     const sp=u.species.get(c.speciesId); if(!sp) continue;
     const sprite=getSpeciesSprite(u,sp); if(!sprite) continue;
     ctx.save(); ctx.translate(c.x,c.y); ctx.rotate(Math.atan2(c.vy,c.vx));
-    ctx.globalAlpha=0.9 + Math.sin((c.age*0.5 + c.x*0.01))*0.1; if(c.blink>0) ctx.globalAlpha=1;
+    ctx.globalAlpha= c.blink>0 ? 1 : 0.98;
     ctx.drawImage(sprite, -sprite.width*0.02, -sprite.height*0.02, sprite.width*0.04, sprite.height*0.04);
     ctx.restore();
   }
+
   if(selected && selected.u===u && selected.c){
-    ctx.save(); ctx.strokeStyle='rgba(251,191,36,0.9)'; ctx.lineWidth=2/view.z/DPR; ctx.beginPath(); ctx.arc(selected.c.x,selected.c.y,14,0,TAU); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.strokeStyle='rgba(251,191,36,0.95)'; ctx.lineWidth=2.2/view.z/DPR; ctx.beginPath(); ctx.arc(selected.c.x,selected.c.y,16,0,TAU); ctx.stroke(); ctx.restore();
   }
   ctx.restore();
 }
@@ -458,18 +560,17 @@ function drawMini(){
   const nodes=Array.from(multiverse.universes.keys()); if(!nodes.length) return;
   const w=miniNet.width,h=miniNet.height,r=Math.min(w,h)*0.35; const pos=new Map();
   nodes.forEach((id,i)=>{ const a=TAU*i/nodes.length; pos.set(id,[w/2+Math.cos(a)*r,h/2+Math.sin(a)*r]); });
-  mNet.strokeStyle='rgba(125,211,252,0.5)'; mNet.lineWidth=2;
+  mNet.strokeStyle='rgba(125,211,252,0.7)'; mNet.lineWidth=2;
   for(const e of multiverse.edges){ const [ax,ay]=pos.get(e.a), [bx,by]=pos.get(e.b); mNet.beginPath(); mNet.moveTo(ax,ay); mNet.lineTo(bx,by); mNet.stroke(); }
-  for(const id of nodes){ const [x,y]=pos.get(id); const u=multiverse.universes.get(id), pop=u.creatures.length; mNet.fillStyle=id===multiverse.currentId?'#fbbf24':'#7dd3fc'; mNet.beginPath(); mNet.arc(x,y,8+Math.min(8,pop/80),0,TAU); mNet.fill(); mNet.fillStyle='#cbd5e1'; mNet.font=`${12*DPR}px system-ui`; mNet.textAlign='center'; mNet.fillText(id,x,y-14); }
+  for(const id of nodes){ const [x,y]=pos.get(id); const u=multiverse.universes.get(id), pop=u.creatures.length; mNet.fillStyle=id===multiverse.currentId?'#facc15':'#38bdf8'; mNet.beginPath(); mNet.arc(x,y,8+Math.min(8,pop/80),0,TAU); mNet.fill(); mNet.fillStyle='#e5eefb'; mNet.font=`${12*DPR}px system-ui`; mNet.textAlign='center'; mNet.fillText(id,x,y-14); }
   miniNet.onclick=(e)=>{ const r=miniNet.getBoundingClientRect(); const x=(e.clientX-r.left)*DPR, y=(e.clientY-r.top)*DPR; for(const [id,p] of pos){ if(Math.hypot(x-p[0], y-p[1])<14*DPR){ multiverse.currentId=id; centerView(); break; } } };
-  // Local map
+  // Local
   mUni.clearRect(0,0,miniUni.width,miniUni.height); const u=multiverse.currentUniverse(); if(!u) return;
   const sc=Math.min(miniUni.width,miniUni.height)/(u.size*1.1), tx=x=>x*sc+miniUni.width*0.05, ty=y=>y*sc+miniUni.height*0.05;
-  mUni.strokeStyle='rgba(148,163,184,0.4)'; mUni.strokeRect(tx(0),ty(0),u.size*sc,u.size*sc);
-  mUni.fillStyle='rgba(34,197,94,0.6)'; for(const f of u.food){ mUni.fillRect(tx(f.x),ty(f.y),1,1); }
-  mUni.fillStyle='rgba(251,191,36,0.9)'; for(const h of u.holes){ mUni.beginPath(); mUni.arc(tx(h.x),ty(h.y),6,0,TAU); mUni.fill(); }
+  mUni.strokeStyle='rgba(148,163,184,0.6)'; mUni.strokeRect(tx(0),ty(0),u.size*sc,u.size*sc);
+  mUni.fillStyle='rgba(172,255,120,0.95)'; for(const f of u.food){ mUni.fillRect(tx(f.x),ty(f.y),1,1); }
+  mUni.fillStyle='rgba(251,191,36,0.95)'; for(const h of u.holes){ mUni.beginPath(); mUni.arc(tx(h.x),ty(h.y),6,0,TAU); mUni.fill(); }
 }
-$fabMap.onclick=()=>{ setDrawer(true); requestAnimationFrame(drawMini); };
 
 /* ---------- Selection ---------- */
 let selected=null;
@@ -478,7 +579,7 @@ canvas.addEventListener('click', e=>{
   const [wx,wy]=screenToWorld((e.clientX-rect.left)*DPR, (e.clientY-rect.top)*DPR);
   const u=multiverse.currentUniverse(); let best=null,bd=20;
   for(const c of u.creatures){ const d=Math.hypot(c.x-wx,c.y-wy); if(d<bd){ bd=d; best=c; } }
-  if(best){ selected={u,c:best}; showInspect(best,u); setDrawer(true); }
+  if(best){ selected={u,c:best}; showInspect(best,u); setDrawer(true); activateTab('pageInspect'); }
 });
 function showInspect(c,u){
   const sp=u.species.get(c.speciesId), parent=sp.parent?u.species.get(sp.parent):null, t=sp.genome;
@@ -486,8 +587,8 @@ function showInspect(c,u){
     <div style="color:#9fb3c7">Parent: ${parent? parent.name+" (#"+parent.id+")":"— root"}</div>
     <div>Diet: ${["Herbivore","Predator","Omnivore"][t.diet]} • Morph: ${["Radiate","Bilateral","Orbital","Shell","Frond"][t.morph]}</div>
     <div>HSL: ${t.hue} / ${t.sat.toFixed(2)} / ${t.lum.toFixed(2)}</div>
-    <div>Size: ${t.size.toFixed(1)}  Speed: ${t.speed.toFixed(1)}  Sense: ${t.sense.toFixed(0)}</div>
-    <div>Creature age: ${c.age.toFixed(1)}  energy: ${c.energy.toFixed(0)}</div>
+    <div>Size: ${t.size.toFixed(1)} • Speed: ${t.speed.toFixed(1)} • Sense: ${t.sense.toFixed(0)}</div>
+    <div>Creature age: ${c.age.toFixed(1)} • energy: ${c.energy.toFixed(0)}</div>
     <div>Born: ${sp.totalBorn} • Deaths: ${sp.totalDeaths} • Best age: ${sp.bestAge.toFixed(1)} • Expansions: ${sp.expansions}</div>`;
 }
 
@@ -546,7 +647,8 @@ function frame(){
 }
 
 /* ---------- Kickoff ---------- */
-multiverse.currentId=1; centerView(); logLine("Fullscreen mode: use the floating buttons. 🌌");
+multiverse.currentId=1; centerView();
+setTimeout(()=>{ $toast.classList.add('show'); setTimeout(()=>$toast.classList.remove('show'), 3000); }, 600);
 requestAnimationFrame(frame);
 
 })(); // IIFE end
